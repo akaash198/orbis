@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find F:ORBISOrbisporte-mainbackend -type f -name *.py ! -path */venv/* ! -path */.venv/*)",
+      "Bash(while IFS= read -r file)",
+      "Bash(do head:*)",
+      "Bash(done)"
+    ]
+  }
+}

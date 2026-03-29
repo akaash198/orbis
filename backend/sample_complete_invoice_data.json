@@ -1,0 +1,70 @@
+{
+  "invoice_data": {
+    "invoice_number": "INV-2026-00123",
+    "invoice_date": "2026-03-01",
+    "buyer_name": "ABC Traders Pvt Ltd",
+    "buyer_iec": "1234567890",
+    "buyer_gst": "27AABCU9603R1Z5",
+    "buyer_address": "123 MG Road, Mumbai 400001, India",
+    "supplier_name": "Global Electronics Co Ltd",
+    "supplier_address": "456 Tech Park, Shenzhen, China",
+    "supplier_country": "CHN",
+    "country_of_origin": "CHN",
+    "bill_of_lading": "MAEU123456789",
+    "bl_date": "2026-02-25",
+    "vessel_name": "MSC ATLANTA",
+    "total_amount": 500000.00,
+    "currency": "USD",
+    "exchange_rate": 83.50,
+    "freight": 5000.00,
+    "insurance": 2500.00
+  },
+  "line_items": [
+    {
+      "line_number": 1,
+      "product_description": "LED Display Panels 55 inch",
+      "hsn_code": "8528.72.00",
+      "quantity": 100,
+      "unit": "PCS",
+      "unit_price": 3000.00,
+      "total_value": 300000.00,
+      "duty_calculation": {
+        "cif_value": 300000.00,
+        "assessable_value": 330000.00,
+        "bcd_rate": 10.0,
+        "bcd_amount": 30000.00,
+        "igst_rate": 18.0,
+        "igst_amount": 59400.00,
+        "sws_rate": 10.0,
+        "sws_amount": 3000.00,
+        "total_duty": 92400.00
+      }
+    },
+    {
+      "line_number": 2,
+      "product_description": "Wireless Keyboards",
+      "hsn_code": "8471.60.00",
+      "quantity": 500,
+      "unit": "PCS",
+      "unit_price": 400.00,
+      "total_value": 200000.00,
+      "duty_calculation": {
+        "cif_value": 200000.00,
+        "assessable_value": 220000.00,
+        "bcd_rate": 10.0,
+        "bcd_amount": 20000.00,
+        "igst_rate": 18.0,
+        "igst_amount": 39600.00,
+        "sws_rate": 10.0,
+        "sws_amount": 2000.00,
+        "total_duty": 61600.00
+      }
+    }
+  ],
+  "summary": {
+    "total_items": 2,
+    "total_cif_value": 500000.00,
+    "total_duty": 154000.00,
+    "total_payable": 654000.00
+  }
+}

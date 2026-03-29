@@ -1,0 +1,693 @@
+/**
+ * API Service
+ * 
+ * Centralizes all API calls to the backend.
+ */
+
+import axios from 'axios';
+
+// Prefer explicit env, otherwise default to localhost; we'll add runtime fallbacks below
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+console.log('API URL:', API_URL);
+
+// Create axios instance with base URL
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Token management
+let authToken = localStorage.getItem('authToken');
+let refreshToken = localStorage.getItem('refreshToken');
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Set auth token in axios headers
+const setAuthToken = (token) => {
+  authToken = token;
+  if (token) {
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    localStorage.setItem('authToken', token);
+  } else {
+    delete apiClient.defaults.headers.common['Authorization'];
+    localStorage.removeItem('authToken');
+  }
+};
+
+// Set refresh token in localStorage
+const setRefreshToken = (token) => {
+  refreshToken = token;
+  if (token) {
+    localStorage.setItem('refreshToken', token);
+  } else {
+    localStorage.removeItem('refreshToken');
+  }
+};
+
+// Initialize token if available
+if (authToken) {
+  setAuthToken(authToken);
+}
+
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle auth errors and automatic token refresh
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if error is 401 and we haven't already tried to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+            return apiClient(originalRequest);
+          })
+          .catch(err => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      // Try to refresh the token
+      if (refreshToken) {
+        try {
+          console.log('Attempting to refresh access token...');
+          const response = await axios.post(`${API_URL}/auth/refresh`, {
+            refresh_token: refreshToken
+          });
+
+          const { access_token, refresh_token: newRefreshToken } = response.data;
+
+          // Update tokens
+          setAuthToken(access_token);
+          setRefreshToken(newRefreshToken);
+
+          // Update the original request with new token
+          originalRequest.headers['Authorization'] = 'Bearer ' + access_token;
+
+          // Process all queued requests
+          processQueue(null, access_token);
+
+          console.log('Token refreshed successfully');
+          isRefreshing = false;
+
+          // Retry the original request
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          processQueue(refreshError, null);
+          isRefreshing = false;
+
+          // Clear tokens and notify user
+          setAuthToken(null);
+          setRefreshToken(null);
+
+          window.dispatchEvent(new CustomEvent('tokenExpired', {
+            detail: {
+              message: 'Your session has expired. Please log in again.',
+              status: 401
+            }
+          }));
+
+          return Promise.reject(refreshError);
+        }
+      } else {
+        // No refresh token available
+        isRefreshing = false;
+        setAuthToken(null);
+
+        window.dispatchEvent(new CustomEvent('tokenExpired', {
+          detail: {
+            message: 'Your session has expired. Please log in again.',
+            status: 401
+          }
+        }));
+
+        return Promise.reject(error);
+      }
+    }
+
+    // Handle 402 status or other errors
+    if (error.response?.status === 402) {
+      setAuthToken(null);
+      setRefreshToken(null);
+
+      window.dispatchEvent(new CustomEvent('tokenExpired', {
+        detail: {
+          message: 'Your session has expired. Please log in again.',
+          status: error.response?.status
+        }
+      }));
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// ---- Fallback host handling for ERR_NETWORK (dev convenience) ----
+const fallbackHosts = (() => {
+  const hosts = [];
+  // Current configured base
+  try { hosts.push(new URL(API_URL).origin); } catch (_) {}
+  // 127.0.0.1 variant
+  try {
+    const u = new URL(API_URL);
+    hosts.push(`${u.protocol}//127.0.0.1:${u.port || (u.protocol === 'https:' ? '443' : '8000')}`);
+  } catch (_) {}
+  // Same-origin (useful if backend is reverse-proxied with frontend)
+  try { hosts.push(window.location.origin); } catch (_) {}
+  // Deduplicate
+  return Array.from(new Set(hosts.filter(Boolean)));
+})();
+
+async function postWithFallback(path, data, config) {
+  let lastErr;
+  for (const origin of fallbackHosts) {
+    try {
+      const client = origin === apiClient.defaults.baseURL
+        ? apiClient
+        : axios.create({ baseURL: origin, headers: { 'Content-Type': 'application/json' } });
+      if (authToken) client.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+      const res = await client.post(path, data, config);
+      // If different origin succeeded, update default for future calls
+      if (origin !== apiClient.defaults.baseURL) {
+        apiClient.defaults.baseURL = origin;
+      }
+      return res;
+    } catch (err) {
+      lastErr = err;
+      // Retry only on network errors (no response)
+      if (err.code !== 'ERR_NETWORK' && !(!err.response && err.request)) {
+        throw err;
+      }
+    }
+  }
+  throw lastErr;
+}
+
+// Document Services
+const documentService = {
+  checkDuplicate: async (contentHash) => {
+    const response = await apiClient.post('/react/check-duplicate', {
+      content_hash: contentHash
+    });
+    return response.data;
+  },
+
+  uploadDocument: async (file, contentHash = null) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (contentHash) {
+      formData.append('content_hash', contentHash);
+      console.log('[UPLOAD] Sending content_hash:', contentHash.substring(0, 16) + '...');
+    }
+    const response = await apiClient.post('/react/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  extractDocument: async (filePath, classification, filename, contentHash = null, extractBarcodes = false) => {
+    const response = await apiClient.post('/react/extract', {
+      file_path: filePath,
+      classification,
+      filename: filename || 'unknown',
+      content_hash: contentHash,
+      extract_barcodes: extractBarcodes
+    });
+    return response.data;
+  },
+
+  /**
+   * ULTRA-FAST extraction (3-7x faster!)
+   * Use this when document type is known - skips classification entirely.
+   *
+   * @param {string} filePath - Path to uploaded PDF
+   * @param {string} documentType - Known document type (invoice, bill_of_lading, packing_list, etc.)
+   * @param {string} filename - Original filename
+   * @param {boolean} extractBarcodes - Whether to extract barcodes (default: false)
+   * @returns {Promise} Extraction result
+   *
+   * Performance:
+   * - Text-based PDFs: 5-12 seconds for 7 pages
+   * - Image-based PDFs: 10-15 seconds for 7 pages
+   */
+  extractDocumentFast: async (filePath, documentType, filename = 'unknown', extractBarcodes = false, contentHash = null) => {
+    console.log(`[FAST] Using fast extraction for ${filename} as ${documentType}`);
+    const response = await apiClient.post('/react/extract-fast', {
+      file_path: filePath,
+      document_type: documentType,
+      filename: filename,
+      extract_barcodes: extractBarcodes,
+      content_hash: contentHash
+    });
+    console.log(`[FAST] Extraction completed in ${response.data.processing_time}s`);
+    return response.data;
+  },
+
+  /**
+   * Smart extraction - automatically chooses fast or standard mode
+   *
+   * @param {string} filePath - Path to uploaded PDF
+   * @param {string} documentType - Document type ('invoice', 'unknown', etc.)
+   * @param {object} classification - Pre-computed classification (optional)
+   * @param {string} filename - Original filename
+   * @param {string} contentHash - SHA-256 hash for duplicate detection (optional)
+   * @param {boolean} extractBarcodes - Whether to extract barcodes/QR codes (default: false)
+   * @returns {Promise} Extraction result
+   */
+  extractDocumentSmart: async (filePath, documentType = 'unknown', classification = null, filename = 'unknown', contentHash = null, extractBarcodes = false) => {
+    // If document type is known and not 'unknown', use FAST mode
+    if (documentType && documentType !== 'unknown') {
+      console.log(`[SMART] Using FAST mode (known type: ${documentType})`);
+      return documentService.extractDocumentFast(filePath, documentType, filename, extractBarcodes, contentHash);
+    }
+
+    // Otherwise use standard extraction with classification
+    console.log(`[SMART] Using STANDARD mode (type unknown)`);
+    return documentService.extractDocument(filePath, classification, filename, contentHash, extractBarcodes);
+  },
+
+  /**
+   * Get all extracted documents for the current user
+   */
+  getAllDocuments: async () => {
+    const response = await apiClient.get('/react/documents');
+    return response.data;
+  },
+
+  /**
+   * Get a specific document by ID with full extracted data
+   */
+  getDocumentById: async (documentId) => {
+    const response = await apiClient.get(`/react/documents/${documentId}`);
+    return response.data;
+  },
+
+  /**
+   * Rescan and re-extract data from a previously uploaded document
+   * Updates the existing database record with new extraction data
+   *
+   * @param {string} contentHash - SHA-256 hash of the document
+   * @param {string} filePath - Path to the uploaded file
+   * @param {string} filename - Original filename
+   * @param {boolean} extractBarcodes - Whether to extract barcodes/QR codes (default: false)
+   * @returns {Promise} Rescan result with updated extraction data
+   */
+  rescanDocument: async (contentHash, filePath, filename = 'unknown', extractBarcodes = false) => {
+    console.log(`[RESCAN] Rescanning document: ${filename}`);
+    console.log(`[RESCAN] Hash: ${contentHash.substring(0, 16)}...`);
+    console.log(`[RESCAN] Path: ${filePath}`);
+    console.log(`[RESCAN] Extract barcodes: ${extractBarcodes}`);
+
+    const response = await apiClient.post('/react/rescan', {
+      content_hash: contentHash,
+      file_path: filePath,
+      filename: filename,
+      extract_barcodes: extractBarcodes
+    });
+
+    console.log(`[RESCAN] Success:`, response.data.message);
+    return response.data;
+  }
+};
+
+// Q&A Service for general customs questions
+const qaService = {
+  async askGeneralQuestion(question) {
+    try {
+      const response = await fetch(`${API_URL}/react/qa`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error asking general question:', error);
+      throw error;
+    }
+  }
+};
+
+// Chat Service for document-specific questions (RAG pipeline)
+const chatService = {
+  async sendMessage(message, useAllDocuments = false) {
+    try {
+      const response = await fetch(`${API_URL}/react/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          question: message,
+          use_all_documents: useAllDocuments
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      throw error;
+    }
+  },
+
+  async getDocumentSummary() {
+    try {
+      const response = await fetch(`${API_URL}/react/documents/summary`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting document summary:', error);
+      throw error;
+    }
+  },
+
+  async validateDocumentContext(question) {
+    try {
+      const response = await fetch(`${API_URL}/react/documents/validate-context`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error validating document context:', error);
+      throw error;
+    }
+  }
+};
+
+// HS Code Services
+const hsCodeService = {
+  lookupHSCode: async (productDescription) => {
+    const response = await apiClient.post('/react/hscode', { 
+      product_description: productDescription,
+      use_agentic: true
+    });
+    return response.data;
+  },
+
+  enhanceWithHSCodes: async (extractedData) => {
+    const response = await apiClient.post('/react/enhance-hscode', {
+      extracted_data: extractedData
+    });
+    return response.data;
+  }
+};
+
+// Customs Services
+const customsService = {
+  generateDeclaration: async (invoices, billOfLading, shipmentType, shipmentChannel) => {
+    const response = await apiClient.post('/customs/generate-declaration', {
+      invoices,
+      bill_of_lading: billOfLading,
+      shipment_type: shipmentType,
+      shipment_channel: shipmentChannel
+    });
+    return response.data;
+  },
+
+  /**
+   * Generate customs declaration from selected document IDs (from database)
+   * @param {Array<number>} documentIds - Array of document IDs to include
+   * @param {string} shipmentType - "Import" or "Export"
+   * @param {string} shipmentChannel - "Sea", "Air", or "Land"
+   */
+  generateDeclarationFromDocuments: async (documentIds, shipmentType, shipmentChannel) => {
+    const response = await apiClient.post('/customs/generate-from-documents', {
+      document_ids: documentIds,
+      shipment_type: shipmentType,
+      shipment_channel: shipmentChannel
+    });
+    return response.data;
+  },
+
+  /**
+   * Generate customs declaration from session documents (in-memory)
+   * @param {Array<Object>} documents - Array of document objects with extracted data
+   * @param {string} shipmentType - "Import" or "Export"
+   * @param {string} shipmentChannel - "Sea", "Air", or "Land"
+   */
+  generateDeclarationFromSessionDocs: async (documents, shipmentType, shipmentChannel) => {
+    const response = await apiClient.post('/customs/generate-from-session', {
+      documents: documents,
+      shipment_type: shipmentType,
+      shipment_channel: shipmentChannel
+    });
+    return response.data;
+  },
+
+  validateDeclaration: async (declaration) => {
+    const response = await apiClient.post('/customs/validate', { declaration });
+    return response.data;
+  },
+
+  exportDeclaration: async (declaration, format = 'json') => {
+    const response = await apiClient.post('/customs/export', { 
+      declaration, 
+      format 
+    });
+    return response.data;
+  }
+};
+
+// Dashboard Services
+const dashboardService = {
+  /**
+   * Get user-specific dashboard statistics
+   * Requires authentication
+   */
+  getDashboardStats: async () => {
+    const response = await apiClient.get('/react/dashboard-stats');
+    return response.data;
+  }
+};
+
+// Authentication Services
+const authService = {
+  async validateToken() {
+    try {
+      if (!authToken) {
+        return { valid: false, error: 'No token found' };
+      }
+      
+      const response = await apiClient.get('/auth/validate-token');
+      return { valid: true, data: response.data };
+    } catch (error) {
+      console.error('Token validation error:', error);
+      if (error.response?.status === 401 || error.response?.status === 402) {
+        // Token is invalid or expired
+        setAuthToken(null);
+        return { valid: false, error: 'Token expired or invalid' };
+      }
+      return { valid: false, error: error.message };
+    }
+  },
+
+  async login(email, password) {
+    try {
+      const response = await postWithFallback('/auth/login', { email, password });
+
+      // Store JWT tokens
+      if (response.data.access_token) {
+        setAuthToken(response.data.access_token);
+      }
+      if (response.data.refresh_token) {
+        setRefreshToken(response.data.refresh_token);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  },
+
+  async signup(userData) {
+    try {
+      const response = await postWithFallback('/auth/signup', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
+  },
+
+  async logout() {
+    try {
+      // Send refresh token to backend for revocation
+      const response = await apiClient.post('/auth/logout', {
+        refresh_token: refreshToken
+      });
+
+      // Clear tokens on logout
+      setAuthToken(null);
+      setRefreshToken(null);
+
+      // Clear session data
+      sessionStorage.removeItem('customs_declarations_count');
+
+      return response.data;
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear tokens even if logout fails
+      setAuthToken(null);
+      setRefreshToken(null);
+
+      // Clear session data even if logout fails
+      sessionStorage.removeItem('customs_declarations_count');
+
+      throw error;
+    }
+  },
+
+  async updateProfile(userId, profileData) {
+    try {
+      const response = await apiClient.put(`/auth/users/${userId}`, profileData);
+      return response.data;
+    } catch (error) {
+      console.error('Profile update error:', error);
+      throw error;
+    }
+  },
+
+  async createUser(userData) {
+    try {
+      const response = await apiClient.post('/auth/users', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Create user error:', error);
+      throw error;
+    }
+  },
+
+  async getUsers() {
+    try {
+      const response = await apiClient.get('/auth/users');
+      return response.data;
+    } catch (error) {
+      console.error('Get users error:', error);
+      throw error;
+    }
+  },
+
+  async deleteUser(userId) {
+    try {
+      const response = await apiClient.delete(`/auth/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete user error:', error);
+      throw error;
+    }
+  },
+
+  // Refresh token manually
+  async refreshAccessToken() {
+    try {
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await axios.post(`${API_URL}/auth/refresh`, {
+        refresh_token: refreshToken
+      });
+
+      const { access_token, refresh_token: newRefreshToken } = response.data;
+
+      // Update tokens
+      setAuthToken(access_token);
+      setRefreshToken(newRefreshToken);
+
+      return response.data;
+    } catch (error) {
+      console.error('Manual token refresh error:', error);
+      // Clear tokens if refresh fails
+      setAuthToken(null);
+      setRefreshToken(null);
+      throw error;
+    }
+  },
+
+  // Token management
+  getToken: () => authToken,
+  getRefreshToken: () => refreshToken,
+  setToken: setAuthToken,
+  setRefreshToken: setRefreshToken,
+  clearToken: () => {
+    setAuthToken(null);
+    setRefreshToken(null);
+  },
+  isAuthenticated: () => !!authToken
+};
+
+// Export all services
+export {
+  documentService,
+  qaService,
+  chatService,
+  hsCodeService,
+  customsService,
+  authService,
+  dashboardService
+};

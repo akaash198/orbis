@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FF6B35" />
+    <meta
+      name="description"
+      content="OrbisPorté - The AI-Driven Global Trade Automation & Customs Platform (A product of SPECTRA AI PTE. LTD., Singapore)"
+    />
+    <!-- Cache-busting meta tags to force reload -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>OrbisPorté - Global Trade Automation Platform</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <!-- Aggressive cache-clearing script - runs before React -->
+    <script>
+      // Version marker to detect when code should reload
+      const CURRENT_VERSION = '6.0.1-' + Date.now();
+      const STORED_VERSION = localStorage.getItem('app_version');
+
+      console.log('[Cache Buster] Current version:', CURRENT_VERSION, 'Stored version:', STORED_VERSION);
+
+      // If version changed or first load, clear all caches
+      if (STORED_VERSION !== CURRENT_VERSION) {
+        console.log('[Cache Buster] Version mismatch detected! Clearing all caches...');
+
+        // Clear service workers
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+              registration.unregister();
+              console.log('[Cache Buster] Unregistered service worker');
+            }
+          });
+        }
+
+        // Clear all cache storage
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (let name of names) {
+              caches.delete(name);
+              console.log('[Cache Buster] Deleted cache:', name);
+            }
+          });
+        }
+
+        // Update stored version
+        localStorage.setItem('app_version', CURRENT_VERSION);
+        console.log('[Cache Buster] ✓ Caches cleared, version updated to', CURRENT_VERSION);
+
+        // Force reload if this isn't already a forced reload
+        if (!sessionStorage.getItem('force_reloaded')) {
+          sessionStorage.setItem('force_reloaded', 'true');
+          console.log('[Cache Buster] ⚡ Force reloading page...');
+          window.location.reload(true);
+        } else {
+          sessionStorage.removeItem('force_reloaded');
+        }
+      }
+    </script>
+  </body>
+</html>

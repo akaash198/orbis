@@ -1,0 +1,26 @@
+{
+  "document_id": "2e0a4290-405b-4852-ba72-d60c1ce5df50",
+  "document_type": "invoice",
+  "language": "en",
+  "source_channel": "portal",
+  "original_filename": "sample-invoice.pdf",
+  "file_type": "pdf",
+  "content_hash": "c2ce1edcbb91cf8f6685f4749a5eedcb752795e5e8f0a126f13953a0f3974f69",
+  "text_sample": "CONTOSO LTD. \n \n \nContoso Headquarters \n123 456th St \nNew York, NY, 10001 \n \n \n \nMicrosoft Corp \n123 Other St, \nRedmond WA, 98052 \n \n \n \nINVOICE\nINVOICE: INV-100\nDATE: 11/15/2019\nDUE DATE: 12/15/2019\nCUSTOMER NAME: MICROSOFT CORPORATION\nCUSTOMER ID: CID-12345\nBILL TO: \nMicrosoft Finance \n123 Bill St, \nRedmond WA, 98052 \nSHIP TO: \nMicrosoft Delivery \n123 Ship St, \nRedmond WA, 98052 \nSERVICE ADDRESS: \nMicrosoft Services \n123 Service St, \nRedmond WA, 98052 \nSALESPERSON \nP.O. NUMBER \nREQUISITIONER \n",
+  "metadata_tags": {
+    "document_id": "2e0a4290-405b-4852-ba72-d60c1ce5df50",
+    "document_type": "invoice",
+    "language": "en",
+    "source_system": "PORTAL v1",
+    "source_channel": "portal",
+    "original_filename": "sample-invoice.pdf",
+    "file_type": "pdf",
+    "file_size_bytes": 104430,
+    "content_hash": "c2ce1edcbb91cf8f6685f4749a5eedcb752795e5e8f0a126f13953a0f3974f69",
+    "timestamp": "2026-03-23T06:19:57.781255",
+    "sender_info": "test@orbisporte.com"
+  },
+  "is_duplicate": true,
+  "duplicate_of": "90ee3317-c5ac-44be-9ebb-3694c6c85396",
+  "ingested_at": "2026-03-23T06:19:57.803694"
+}
