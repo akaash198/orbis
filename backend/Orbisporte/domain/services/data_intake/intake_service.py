@@ -18,6 +18,8 @@ run in a background FastAPI task.
 """
 
 import logging
+import os
+import tempfile
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -33,6 +35,53 @@ from Orbisporte.infrastructure.data_lake import get_data_lake
 from Orbisporte.infrastructure.kafka_client import get_producer
 
 logger = logging.getLogger(__name__)
+
+# ── LLM fallback classifier ───────────────────────────────────────────────────
+# Maps the doc_classification service's normalized output back to the intake keys.
+_CLASSIFY_MAP = {
+    "commercial_invoice": "commercial_invoice",
+    "invoice":            "commercial_invoice",
+    "packing_list":       "packing_list",
+    "air_waybill":        "air_waybill",
+    "airwaybill":         "air_waybill",
+    "bill_of_lading":     "bill_of_lading",
+    "certificate_of_origin": "certificate_of_origin",
+    "purchase_order":     "purchase_order",
+    "proforma_invoice":   "proforma_invoice",
+    "customs_declaration": "customs_declaration",
+    "arrival_notice":     "arrival_notice",
+    "unknown":            "unknown",
+}
+
+def _llm_classify(file_bytes: bytes, file_type: str, fallback: dict) -> dict:
+    """
+    Use the LLM vision classifier (DocumentClassificationService) as a fallback
+    when the heuristic keyword scan returns unknown or low confidence.
+    Writes a temp file, calls the classifier, then cleans up.
+    """
+    try:
+        from Orbisporte.domain.services.doc_classification import DocumentClassificationService
+        ext = file_type if file_type.startswith(".") else f".{file_type}"
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = tmp.name
+
+        try:
+            svc = DocumentClassificationService()
+            raw_type = svc.classify_document(tmp_path)
+            doc_type = _CLASSIFY_MAP.get(raw_type, raw_type)
+            logger.info("DM-005 LLM fallback classified as: %s (raw=%s)", doc_type, raw_type)
+            return {
+                **fallback,
+                "document_type": doc_type,
+                "classification_confidence": 0.75,  # LLM result carries reasonable confidence
+            }
+        finally:
+            os.unlink(tmp_path)
+
+    except Exception as exc:
+        logger.warning("DM-005 LLM fallback failed: %s — keeping heuristic result", exc)
+        return fallback
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -175,6 +224,25 @@ class IntakeService:
             # ── Deduplication ─────────────────────────────────────────
             text_sample = language_detector._extract_text_sample(processed_bytes, file_type)
             is_dup, dup_of, dup_conf = check_duplicate(document_id, text_sample)
+
+            # Validate that the matched original still exists in the registry.
+            # If the original was deleted the FAISS entry is orphaned — treat
+            # this upload as new and purge the stale entry from the index.
+            if is_dup and dup_of:
+                from Orbisporte.domain.services.data_intake.deduplication import remove_from_dedup_index
+                original_exists = (
+                    self._db.query(DocumentRegistry)
+                    .filter_by(document_id=dup_of)
+                    .first()
+                )
+                if not original_exists:
+                    logger.info(
+                        "Dedup: original %s no longer in registry — treating %s as new and removing orphaned FAISS entry.",
+                        dup_of, document_id,
+                    )
+                    remove_from_dedup_index(dup_of)
+                    is_dup, dup_of, dup_conf = False, None, 0.0
+
             entry.is_duplicate       = is_dup
             entry.duplicate_of       = dup_of
             entry.duplicate_confidence = dup_conf
@@ -188,6 +256,16 @@ class IntakeService:
             detected = language_detector.detect_language_and_type(
                 processed_bytes, file_type, source_channel
             )
+
+            # Fall back to LLM vision classifier when heuristic is uncertain
+            # (image files always have confidence 0.0; PDFs may also be ambiguous)
+            _needs_llm = (
+                detected["document_type"] == "unknown"
+                or detected["classification_confidence"] < 0.4
+            )
+            if _needs_llm and file_type in ("pdf", "jpeg", "jpg", "png", "tiff"):
+                detected = _llm_classify(processed_bytes, file_type, detected)
+
             entry.language                 = detected["language"]
             entry.document_type            = detected["document_type"]
             entry.classification_confidence = detected["classification_confidence"]

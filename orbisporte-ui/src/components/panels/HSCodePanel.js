@@ -397,7 +397,7 @@ const LookupItemButton = styled.button`
 `;
 
 
-const HSCodePanel = ({ extractedDocuments = [], onClearAll }) => {
+const HSCodePanel = ({ extractedDocuments = [], onClearAll, onPageChange }) => {
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -405,6 +405,11 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll }) => {
   const [itemResults, setItemResults] = useState({});
   const [lookingUpItems, setLookingUpItems] = useState(new Set());
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const [overrideRowIdx, setOverrideRowIdx] = useState(null);
+  const [overrideInput, setOverrideInput]   = useState('');
+  const [manualHsnCode, setManualHsnCode]   = useState('');
+  const [savedManualEntries, setSavedManualEntries] = useState([]);
+  const [manualSaveMsg, setManualSaveMsg]   = useState('');
 
   const sampleProducts = [
     "iPhone smartphone",
@@ -468,6 +473,35 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll }) => {
     }
   };
 
+  // Save an inline per-row HSN override
+  const saveRowOverride = (groupIndex) => {
+    const code = overrideInput.trim();
+    if (!code) return;
+    const idx = groupedItems[groupIndex]?.itemIndices[0];
+    if (idx !== undefined) {
+      setItemResults(prev => ({
+        ...prev,
+        [idx]: { selected_hsn: code, hs_code: code, selected_confidence: 1.0, source: 'manual' },
+      }));
+    }
+    setOverrideRowIdx(null);
+    setOverrideInput('');
+  };
+
+  // Save standalone manual entry
+  const saveManualEntry = () => {
+    const code = manualHsnCode.trim();
+    if (!code) return;
+    setSavedManualEntries(prev => [...prev, {
+      id: Date.now(),
+      hsn_code: code,
+      timestamp: new Date().toLocaleTimeString(),
+    }]);
+    setManualHsnCode('');
+    setManualSaveMsg('Saved!');
+    setTimeout(() => setManualSaveMsg(''), 3000);
+  };
+
   // Group items by document and description to show quantity
   const groupedItems = React.useMemo(() => {
     const groups = [];
@@ -517,6 +551,45 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll }) => {
       console.log('[HSCodePanel] ✓ Auto-selected all', allIndices.length, 'items');
     }
   }, [groupedItems]);
+
+  // Pre-populate itemResults for items that already carry an HSN code from M02
+  React.useEffect(() => {
+    if (!groupedItems || groupedItems.length === 0) return;
+    const prePopulated = {};
+    groupedItems.forEach((group) => {
+      const item = group.originalItem;
+      const existingHsn = item?.hsn_code || item?.hsCode || item?.hs_code || item?.hscode;
+      if (existingHsn) {
+        group.itemIndices.forEach(idx => {
+          prePopulated[idx] = {
+            selected_hsn: existingHsn,
+            hs_code: existingHsn,
+            selected_confidence: 1.0,
+            source: 'document',
+          };
+        });
+      }
+    });
+    if (Object.keys(prePopulated).length > 0) {
+      setItemResults(prev => ({ ...prePopulated, ...prev }));
+    }
+  }, [groupedItems]);
+
+  // When a new document arrives with no HSN code, pre-fill the search box with the
+  // first item's product description so the user can click "Search Code" right away.
+  React.useEffect(() => {
+    if (!extractedDocuments.length) return;
+    const latest = extractedDocuments[extractedDocuments.length - 1];
+    if (!latest?.items?.length) return;
+    const noHsnItem = latest.items.find(item => {
+      const hsn = item.hsCode || item.hsn_code || item.hs_code || item.hscode;
+      return !hsn || !String(hsn).trim();
+    });
+    if (noHsnItem) {
+      const desc = (noHsnItem.product_description || noHsnItem.description || noHsnItem.name || '').trim();
+      if (desc) setText(desc);
+    }
+  }, [extractedDocuments]);
 
   // Toggle selection for a grouped item
   const toggleItemSelection = (groupIndex) => {
@@ -766,9 +839,24 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll }) => {
   
   return (
     <PanelContainer>
-      <PageTitle>
-        HSN Classification Engine
-      </PageTitle>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <PageTitle style={{ margin: 0 }}>
+          HSN Classification Engine
+        </PageTitle>
+        {onPageChange && (
+          <button
+            onClick={() => onPageChange('document')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'transparent', border: '1px solid var(--t-border)',
+              borderRadius: 6, padding: '6px 12px', fontSize: 13,
+              color: 'var(--t-text-sub)', cursor: 'pointer',
+            }}
+          >
+            ← Document Management
+          </button>
+        )}
+      </div>
 
       {/* Display grouped items from all documents */}
       {groupedItems && groupedItems.length > 0 && (
@@ -864,20 +952,67 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll }) => {
                     </td>
                     <td>{group.description}</td>
                     <td>
-                      {isLooking ? (
+                      {overrideRowIdx === groupIndex ? (
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          <input
+                            autoFocus
+                            value={overrideInput}
+                            onChange={e => setOverrideInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveRowOverride(groupIndex); if (e.key === 'Escape') { setOverrideRowIdx(null); setOverrideInput(''); } }}
+                            placeholder="HSN code"
+                            maxLength={10}
+                            style={{
+                              width: 100, padding: '3px 7px', fontSize: 12,
+                              fontFamily: 'monospace', fontWeight: 700,
+                              background: '#0c1a3a', border: '1px solid #3b82f6',
+                              borderRadius: 4, color: '#93c5fd', outline: 'none',
+                            }}
+                          />
+                          <button
+                            onClick={() => saveRowOverride(groupIndex)}
+                            style={{ background: '#1d4ed8', color: 'white', border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                          >✓</button>
+                          <button
+                            onClick={() => { setOverrideRowIdx(null); setOverrideInput(''); }}
+                            style={{ background: '#374151', color: '#9ca3af', border: 'none', borderRadius: 4, padding: '3px 6px', fontSize: 11, cursor: 'pointer' }}
+                          >✕</button>
+                        </div>
+                      ) : isLooking ? (
                         <span>🔄 Looking up...</span>
                       ) : (hsnResult?.selected_hsn || hsnResult?.hs_code) ? (
-                        <HSCodeBadge>{hsnResult.selected_hsn || hsnResult.hs_code}</HSCodeBadge>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <HSCodeBadge>{hsnResult.selected_hsn || hsnResult.hs_code}</HSCodeBadge>
+                          {hsnResult?.source === 'manual' && <span style={{ fontSize: 10, color: '#a5b4fc' }}>manual</span>}
+                          <button
+                            onClick={() => { setOverrideRowIdx(groupIndex); setOverrideInput(hsnResult.selected_hsn || hsnResult.hs_code || ''); }}
+                            title="Override HSN code"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, padding: 0, lineHeight: 1 }}
+                          >✏️</button>
+                        </div>
                       ) : hsnResult?.error ? (
-                        <span style={{ color: theme.colors.status.error }}>Error</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ color: theme.colors.status.error }}>Error</span>
+                          <button
+                            onClick={() => { setOverrideRowIdx(groupIndex); setOverrideInput(''); }}
+                            title="Enter HSN manually"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, padding: 0 }}
+                          >✏️</button>
+                        </div>
                       ) : (
-                        <span style={{ color: theme.colors.text.tertiary }}>-</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ color: theme.colors.text.tertiary }}>-</span>
+                          <button
+                            onClick={() => { setOverrideRowIdx(groupIndex); setOverrideInput(''); }}
+                            title="Enter HSN manually"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, padding: 0 }}
+                          >✏️</button>
+                        </div>
                       )}
                     </td>
                     <td>
                       {(hsnResult?.selected_confidence || hsnResult?.confidence)
                         ? `${Math.round((hsnResult.selected_confidence || hsnResult.confidence) * 100)}%`
-                        : '-'}
+                        : hsnResult?.source === 'manual' ? 'Manual' : '-'}
                     </td>
                   </tr>
                 );
@@ -886,6 +1021,91 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll }) => {
           </ItemsTable>
         </ExtractedItemsSection>
       )}
+
+      {/* ── Manual HSN Entry ── */}
+      <div style={{
+        background: '#0c1222', border: '1px solid #1e3a5f',
+        borderRadius: 12, padding: 24, marginBottom: 8,
+      }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#60a5fa', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          ✏️ Manual HSN Code Entry
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>
+              HSN Code
+            </div>
+            <input
+              value={manualHsnCode}
+              onChange={e => setManualHsnCode(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && saveManualEntry()}
+              placeholder="e.g. 84713010"
+              maxLength={10}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: '#0a1628', border: '1px solid #3b82f6',
+                borderRadius: 6, color: '#93c5fd',
+                padding: '9px 12px', fontSize: 15,
+                fontFamily: 'monospace', fontWeight: 700,
+                letterSpacing: '0.1em', outline: 'none',
+              }}
+            />
+          </div>
+          <button
+            onClick={saveManualEntry}
+            disabled={!manualHsnCode.trim()}
+            style={{
+              background: manualHsnCode.trim() ? 'linear-gradient(135deg, #1d4ed8, #6366f1)' : '#1e293b',
+              color: manualHsnCode.trim() ? 'white' : '#475569',
+              border: 'none', borderRadius: 6,
+              padding: '9px 20px', fontSize: 13, fontWeight: 700,
+              cursor: manualHsnCode.trim() ? 'pointer' : 'not-allowed',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Save &amp; Use
+          </button>
+        </div>
+
+        {manualSaveMsg && (
+          <div style={{ fontSize: 12, color: '#4ade80', marginBottom: 10 }}>✓ {manualSaveMsg}</div>
+        )}
+
+        {/* Saved manual entries */}
+        {savedManualEntries.length > 0 && (
+          <div>
+            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+              Saved Codes ({savedManualEntries.length})
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {savedManualEntries.map(entry => (
+                <div
+                  key={entry.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    background: '#0a1628', border: '1px solid #1e3a5f',
+                    borderRadius: 8, padding: '10px 14px',
+                  }}
+                >
+                  <span style={{
+                    fontFamily: 'monospace', fontWeight: 800, fontSize: 16,
+                    color: '#60a5fa', letterSpacing: '0.1em', flex: 1,
+                  }}>
+                    {entry.hsn_code}
+                  </span>
+                  <span style={{ fontSize: 11, color: '#475569', whiteSpace: 'nowrap' }}>{entry.timestamp}</span>
+                  <button
+                    onClick={() => setSavedManualEntries(prev => prev.filter(e => e.id !== entry.id))}
+                    title="Remove"
+                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 14, padding: 0 }}
+                  >✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       <ContentGrid>
         <MainSection>

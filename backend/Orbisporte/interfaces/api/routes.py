@@ -345,6 +345,55 @@ async def extract_data(
         raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")
 
 
+@router.patch("/react/documents/{document_id}")
+def update_document(
+    document_id: int,
+    payload: Dict[str, Any] = Body(...),
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Partial update for a document — currently supports hs_code and hs_code_description.
+    Also propagates hsn_code into the latest M02ExtractionResult.normalised_fields so that
+    the manually confirmed HSN is used consistently everywhere.
+    """
+    from Orbisporte.domain.models import ProcessedDocument, M02ExtractionResult
+
+    doc = db.query(ProcessedDocument).filter_by(id=document_id, user_id=current_user.id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    updated = False
+
+    if "hs_code" in payload:
+        hsn = str(payload["hs_code"]).strip() if payload["hs_code"] else None
+        doc.hs_code = hsn
+        if "hs_code_description" in payload:
+            doc.hs_code_description = payload["hs_code_description"]
+        # Propagate into the latest M02 normalised_fields so the preview reflects it
+        if hsn:
+            m02 = (
+                db.query(M02ExtractionResult)
+                .filter(
+                    M02ExtractionResult.document_id == document_id,
+                    M02ExtractionResult.review_status != "processing",
+                    M02ExtractionResult.review_status != "error",
+                )
+                .order_by(M02ExtractionResult.created_at.desc())
+                .first()
+            )
+            if m02:
+                nf = dict(m02.normalised_fields or {})
+                nf["hsn_code"] = hsn
+                m02.normalised_fields = nf
+        updated = True
+
+    if not updated:
+        raise HTTPException(status_code=400, detail="No updatable fields provided")
+
+    db.commit()
+    return {"status": "ok", "document_id": document_id, "hs_code": doc.hs_code}
+
+
 @router.delete("/react/documents/{document_id}")
 def delete_document(
     document_id: int,

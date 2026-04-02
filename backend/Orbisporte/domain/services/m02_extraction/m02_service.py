@@ -290,10 +290,19 @@ class M02ExtractionService:
         normalised = normalise_fields(raw_fields)
 
         # ── Stage 4: Confidence scoring ───────────────────────────────────
-        from .confidence_scorer import score_all_fields, compute_overall_confidence, route_document
+        # Primary: GPT-4o-mini evaluates each field against the OCR source text.
+        # Fallback: CatBoost → rule-based heuristics.
+        from .confidence_scorer import (
+            score_fields_with_gpt, score_all_fields,
+            compute_overall_confidence, route_document,
+        )
         from .confidence_trainer import load_calibration, apply_calibration
 
-        raw_scores               = score_all_fields(normalised, gliner_entities)
+        raw_scores = score_fields_with_gpt(normalised, ocr_text, self._client)
+        if raw_scores is None:
+            logger.info("[M02] GPT confidence scoring unavailable — using CatBoost/rule-based fallback")
+            raw_scores = score_all_fields(normalised, gliner_entities)
+
         calibration              = load_calibration()
         field_scores, cal_deltas = apply_calibration(raw_scores, calibration)
         overall                  = compute_overall_confidence(field_scores)
@@ -302,6 +311,7 @@ class M02ExtractionService:
         result["pipeline_stages"]["confidence"] = {
             "overall":           overall,
             "queue":             routing["queue"],
+            "scorer":            "gpt-4o-mini" if raw_scores is not None else "rule-based",
             "calibrated_fields": len(cal_deltas),
         }
 

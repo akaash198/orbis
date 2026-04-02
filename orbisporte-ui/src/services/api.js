@@ -114,7 +114,12 @@ apiClient.interceptors.response.use(
 
           // Update tokens
           setAuthToken(access_token);
-          setRefreshToken(newRefreshToken);
+          // Only update the refresh token if the backend returned a new one.
+          // The /react/refresh-token endpoint returns only access_token, so
+          // calling setRefreshToken(undefined) would delete the existing one.
+          if (newRefreshToken) {
+            setRefreshToken(newRefreshToken);
+          }
 
           // Update the original request with new token
           originalRequest.headers['Authorization'] = 'Bearer ' + access_token;
@@ -183,13 +188,25 @@ const fallbackHosts = (() => {
   const hosts = [];
   // Current configured base
   try { hosts.push(new URL(API_URL).origin); } catch (_) {}
-  // 127.0.0.1 variant
+  // 127.0.0.1 variant — only add when the configured API URL is already localhost/127.0.0.1
+  // to avoid wasting time on an invalid host in production.
   try {
     const u = new URL(API_URL);
-    hosts.push(`${u.protocol}//127.0.0.1:${u.port || (u.protocol === 'https:' ? '443' : '8000')}`);
+    const hostname = u.hostname.toLowerCase();
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+    if (isLocal) {
+      hosts.push(`${u.protocol}//127.0.0.1:${u.port || (u.protocol === 'https:' ? '443' : '8000')}`);
+    }
   } catch (_) {}
   // Same-origin (useful if backend is reverse-proxied with frontend)
-  try { hosts.push(window.location.origin); } catch (_) {}
+  try {
+    const frontendOrigin = window.location.origin;
+    const primaryOrigin = new URL(API_URL).origin;
+    // Only add frontend origin as fallback if it's different from primary AND it's localhost (dev only)
+    if (frontendOrigin !== primaryOrigin && window.location.hostname === 'localhost') {
+      hosts.push(frontendOrigin);
+    }
+  } catch (_) {}
   // Deduplicate
   return Array.from(new Set(hosts.filter(Boolean)));
 })();
@@ -345,7 +362,35 @@ const documentService = {
 
     console.log(`[RESCAN] Success:`, response.data.message);
     return response.data;
-  }
+  },
+
+  /**
+   * Delete a document by ID
+   */
+  deleteDocument: async (documentId) => {
+    const response = await apiClient.delete(`/react/documents/${documentId}`);
+    return response.data;
+  },
+
+  /**
+   * Update document notes/tags (partial update)
+   */
+  updateDocumentNotes: async (documentId, notes) => {
+    const response = await apiClient.patch(`/react/documents/${documentId}`, { notes });
+    return response.data;
+  },
+
+  /**
+   * Persist a confirmed/manually-entered HSN code for a document.
+   * Saves to ProcessedDocument.hs_code and propagates into the latest
+   * M02ExtractionResult.normalised_fields so the code is used consistently.
+   */
+  saveDocumentHSN: async (documentId, hsnCode, hsnDescription = null) => {
+    const body = { hs_code: hsnCode };
+    if (hsnDescription) body.hs_code_description = hsnDescription;
+    const response = await apiClient.patch(`/react/documents/${documentId}`, body);
+    return response.data;
+  },
 };
 
 // Q&A Service for general customs questions

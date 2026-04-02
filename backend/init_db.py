@@ -13,7 +13,11 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from Orbisporte.core import init_db, SessionLocal
-from Orbisporte.domain.models import User, Company
+# Import ALL models so SQLAlchemy registers every table with Base before create_all()
+from Orbisporte.domain.models import (
+    User, Company, ProcessedDocument, RefreshToken,
+    M02ExtractionResult, DocumentRegistry, IntakeEventLog, M03ClassificationResult,
+)
 
 
 def create_test_user():

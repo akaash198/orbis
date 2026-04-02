@@ -164,10 +164,65 @@ class SemanticDeduplicator:
 
         # Always register the new embedding (even duplicates — for dedup of duplicates)
         self._index.add(vec)
-        self._meta.append({"document_id": document_id, "snippet": text_fingerprint[:200]})
+        self._meta.append({
+            "document_id": document_id,
+            "snippet": text_fingerprint[:200],
+            "vector": vec[0].tolist(),
+        })
         self._persist()
 
         return is_duplicate, duplicate_of, similarity
+
+    def remove_document(self, document_id: str) -> bool:
+        """
+        Remove a document's embedding from the FAISS index and metadata.
+
+        Rebuilds the index from the remaining entries so that re-uploading
+        the same file after deletion is not flagged as a duplicate.
+
+        Returns True if the entry was found and removed, False otherwise.
+        """
+        self._ensure_loaded()
+
+        if not _DEDUP_AVAILABLE or self._index is None:
+            return False
+
+        # Find the entry
+        idx_to_remove = next(
+            (i for i, m in enumerate(self._meta) if m["document_id"] == document_id),
+            None,
+        )
+        if idx_to_remove is None:
+            logger.debug("SemanticDeduplicator.remove_document: %s not in index.", document_id)
+            return False
+
+        # Remove from metadata list
+        self._meta.pop(idx_to_remove)
+
+        # Rebuild FAISS index from remaining entries
+        new_index = faiss.IndexFlatIP(EMBEDDING_DIM)
+        if self._meta:
+            vectors = []
+            for entry in self._meta:
+                if "vector" in entry:
+                    vectors.append(entry["vector"])
+                else:
+                    # Legacy entry without stored vector — re-encode from snippet
+                    vec = self._encode(entry.get("snippet", ""))
+                    if vec is not None:
+                        vectors.append(vec[0].tolist())
+                        entry["vector"] = vec[0].tolist()
+                    else:
+                        vectors.append([0.0] * EMBEDDING_DIM)
+
+            arr = np.array(vectors, dtype="float32")
+            new_index.add(arr)
+
+        self._index = new_index
+        self._persist()
+        logger.info("SemanticDeduplicator: removed %s from index (%d entries remaining).",
+                    document_id, len(self._meta))
+        return True
 
 
 # ── Module-level singleton ────────────────────────────────────────────────────
@@ -184,3 +239,8 @@ def get_deduplicator() -> SemanticDeduplicator:
 def check_duplicate(document_id: str, text_fingerprint: str) -> Tuple[bool, Optional[str], float]:
     """Module-level convenience wrapper."""
     return get_deduplicator().check_and_register(document_id, text_fingerprint)
+
+
+def remove_from_dedup_index(document_id: str) -> bool:
+    """Module-level convenience wrapper for removing a document from the dedup index."""
+    return get_deduplicator().remove_document(document_id)

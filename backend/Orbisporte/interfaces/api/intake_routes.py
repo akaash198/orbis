@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 
 from Orbisporte.domain.models import DocumentRegistry
 from Orbisporte.domain.services.data_intake.intake_service import IntakeService
+from Orbisporte.domain.services.data_intake.deduplication import remove_from_dedup_index
 from Orbisporte.domain.services.data_intake.channels.barcode_channel import (
     scan_image as barcode_scan_image,
     decode_raw_payload as barcode_decode_raw,
@@ -365,6 +366,7 @@ def list_registry(
     page_size: int = 20,
     source_channel: Optional[str] = None,
     ingestion_status: Optional[str] = None,
+    is_duplicate: Optional[bool] = None,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -378,6 +380,8 @@ def list_registry(
         query = query.filter(DocumentRegistry.source_channel == source_channel)
     if ingestion_status:
         query = query.filter(DocumentRegistry.ingestion_status == ingestion_status)
+    if is_duplicate is not None:
+        query = query.filter(DocumentRegistry.is_duplicate == is_duplicate)
 
     total = query.count()
     rows  = query.order_by(DocumentRegistry.created_at.desc()).offset(offset).limit(page_size).all()
@@ -397,6 +401,8 @@ def list_registry(
                 "ingestion_status": r.ingestion_status,
                 "current_tier":     r.current_tier,
                 "is_duplicate":     r.is_duplicate,
+                "duplicate_of":     r.duplicate_of,
+                "duplicate_confidence": r.duplicate_confidence,
                 "created_at":       r.created_at.isoformat() if r.created_at else None,
             }
             for r in rows
@@ -491,6 +497,24 @@ def delete_document(
         db.query(M02ExtractionResult).filter_by(document_id=pd.id).delete()
         proc_doc_ids.append(pd.id)
         db.delete(pd)
+
+    # ── Remove from FAISS dedup index ─────────────────────────────────────
+    # Remove the document itself AND any duplicates that pointed to it,
+    # so that re-uploading the same file after deletion is not flagged as duplicate.
+    ids_to_purge = [document_id]
+    duplicate_doc_ids = [
+        r.document_id for r in
+        db.query(DocumentRegistry.document_id)
+        .filter(DocumentRegistry.duplicate_of == document_id)
+        .all()
+    ]
+    ids_to_purge.extend(duplicate_doc_ids)
+
+    for did in ids_to_purge:
+        try:
+            remove_from_dedup_index(did)
+        except Exception as exc:
+            logger.warning("Could not remove %s from dedup index: %s", did, exc)
 
     # ── Remove event logs ─────────────────────────────────────────────────
     db.query(IntakeEventLog).filter_by(document_id=document_id).delete()

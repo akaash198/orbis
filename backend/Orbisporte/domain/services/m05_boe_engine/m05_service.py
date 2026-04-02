@@ -122,6 +122,7 @@ class M05BoEEngine:
                 "line_items": line_items,
                 "risk": risk,
                 "filing_id": filing_id,
+                "boe_number": boe_fields.get("boe_number"),
             }
 
         except Exception as exc:
@@ -322,7 +323,7 @@ class M05BoEEngine:
 
     def get_filing_history(self, user_id: int, limit: int = 20) -> List[Dict[str, Any]]:
         rows = self.db.execute(text("""
-            SELECT id, filing_ref, icegate_boe_number, icegate_ack_number,
+            SELECT id, filing_ref, boe_number, icegate_boe_number, icegate_ack_number,
                    icegate_status, filing_status, risk_score, risk_band,
                    created_at, updated_at, port_of_import
             FROM m05_boe_filings
@@ -364,57 +365,112 @@ class M05BoEEngine:
         Returns a dict shaped to match what _build_boe_fields / _build_line_items
         expect, reconstructed from the flat columns of m04_duty_computations.
         """
+        _SELECT = """
+            SELECT computation_uuid, hsn_code, country_of_origin, quantity, unit,
+                   port_code, input_currency,
+                   fob_cost, freight, insurance, cif_foreign,
+                   exchange_rate, exchange_rate_source, exchange_rate_date,
+                   assessable_value_inr,
+                   bcd_rate, bcd_amount,
+                   sws_rate, sws_amount,
+                   igst_base, igst_rate, igst_amount,
+                   add_rate, add_amount, add_notification_ref,
+                   cvd_rate, cvd_amount,
+                   sgd_rate, sgd_amount,
+                   fta_applicable, fta_agreement_code, fta_preferential_bcd,
+                   fta_roo_eligible, fta_exemption_amount,
+                   total_duty_inr, total_payable_inr,
+                   sop_steps_json, formula_text, anomaly_flags, calculation_time_ms
+            FROM m04_duty_computations
+        """
         if computation_uuid:
-            row = self.db.execute(text("""
-                SELECT computation_uuid, hsn_code, country_of_origin, quantity, unit,
-                       assessable_value_inr, exchange_rate, exchange_rate_source,
-                       bcd_amount, sws_amount, igst_amount, add_amount, cvd_amount,
-                       total_duty_inr, total_payable_inr, anomaly_flags,
-                       sop_steps_json, input_currency
-                FROM m04_duty_computations
-                WHERE CAST(computation_uuid AS TEXT) = :uuid AND user_id = :uid
-                ORDER BY computed_at DESC LIMIT 1
-            """), {"uuid": computation_uuid, "uid": user_id}).fetchone()
+            row = self.db.execute(
+                text(_SELECT + " WHERE CAST(computation_uuid AS TEXT) = :uuid AND user_id = :uid ORDER BY computed_at DESC LIMIT 1"),
+                {"uuid": computation_uuid, "uid": user_id},
+            ).fetchone()
         else:
-            row = self.db.execute(text("""
-                SELECT computation_uuid, hsn_code, country_of_origin, quantity, unit,
-                       assessable_value_inr, exchange_rate, exchange_rate_source,
-                       bcd_amount, sws_amount, igst_amount, add_amount, cvd_amount,
-                       total_duty_inr, total_payable_inr, anomaly_flags,
-                       sop_steps_json, input_currency
-                FROM m04_duty_computations
-                WHERE document_id = :did AND user_id = :uid
-                ORDER BY computed_at DESC LIMIT 1
-            """), {"did": document_id, "uid": user_id}).fetchone()
+            row = self.db.execute(
+                text(_SELECT + " WHERE document_id = :did AND user_id = :uid ORDER BY computed_at DESC LIMIT 1"),
+                {"did": document_id, "uid": user_id},
+            ).fetchone()
 
         if not row:
             return {}
 
         d = dict(row._mapping)
 
-        # Reshape into the dict structure expected by _build_boe_fields / _build_line_items
+        def _f(col, default=None):
+            v = d.get(col)
+            return float(v) if v is not None else default
+
         return {
-            "computation_uuid": str(d.get("computation_uuid") or ""),
-            "assessable_value_inr": d.get("assessable_value_inr"),
-            "cif_inr": d.get("assessable_value_inr"),   # alias
-            "exchange_rate_used": d.get("exchange_rate"),
-            "bcd_inr": d.get("bcd_amount"),
-            "sws_inr": d.get("sws_amount"),
-            "igst_inr": d.get("igst_amount"),
-            "add_inr": d.get("add_amount") or 0,
-            "cvd_inr": d.get("cvd_amount") or 0,
-            "total_duty_inr": d.get("total_duty_inr"),
-            "total_payable_inr": d.get("total_payable_inr"),
-            "anomaly_flags": d.get("anomaly_flags") or {},
-            "steps": d.get("sop_steps_json") or {},
-            # Flat inputs — used in _build_boe_fields / _build_line_items
+            # ── Identity ─────────────────────────────────────────────────────
+            "computation_uuid":    str(d.get("computation_uuid") or ""),
+
+            # ── SOP Step 1 — CIF components ──────────────────────────────────
+            "fob_cost":            _f("fob_cost"),
+            "freight":             _f("freight"),
+            "insurance":           _f("insurance"),
+            "cif_foreign":         _f("cif_foreign"),
+            "input_currency":      d.get("input_currency", "USD"),
+
+            # ── SOP Step 2 — AV ─────────────────────────────────────────────
+            "assessable_value_inr": _f("assessable_value_inr"),
+            "cif_inr":              _f("assessable_value_inr"),   # alias
+            "exchange_rate_used":   _f("exchange_rate"),
+            "exchange_rate_source": d.get("exchange_rate_source"),
+            "exchange_rate_date":   str(d.get("exchange_rate_date") or ""),
+
+            # ── SOP Step 3 — BCD ────────────────────────────────────────────
+            "bcd_rate":   _f("bcd_rate"),
+            "bcd_inr":    _f("bcd_amount"),
+
+            # ── SOP Step 4 — SWS ────────────────────────────────────────────
+            "sws_rate":   _f("sws_rate", 10.0),
+            "sws_inr":    _f("sws_amount"),
+
+            # ── SOP Step 5 — IGST ───────────────────────────────────────────
+            "igst_base":  _f("igst_base"),
+            "igst_rate":  _f("igst_rate"),
+            "igst_inr":   _f("igst_amount"),
+
+            # ── SOP Step 6 — ADD ────────────────────────────────────────────
+            "add_rate":             _f("add_rate", 0.0),
+            "add_inr":              _f("add_amount", 0.0),
+            "add_notification_ref": d.get("add_notification_ref") or "",
+
+            # ── SOP Step 7 — CVD / SGD ──────────────────────────────────────
+            "cvd_rate":  _f("cvd_rate", 0.0),
+            "cvd_inr":   _f("cvd_amount", 0.0),
+            "sgd_rate":  _f("sgd_rate", 0.0),
+            "sgd_inr":   _f("sgd_amount", 0.0),
+
+            # ── SOP Step 8 — FTA ────────────────────────────────────────────
+            "fta_applicable":      bool(d.get("fta_applicable")),
+            "fta_agreement_code":  d.get("fta_agreement_code") or "",
+            "fta_preferential_bcd": _f("fta_preferential_bcd"),
+            "fta_roo_eligible":    d.get("fta_roo_eligible"),
+            "fta_exemption_amount": _f("fta_exemption_amount", 0.0),
+
+            # ── Totals ───────────────────────────────────────────────────────
+            "total_duty_inr":    _f("total_duty_inr"),
+            "total_payable_inr": _f("total_payable_inr"),
+
+            # ── Audit ────────────────────────────────────────────────────────
+            "formula_text":         d.get("formula_text") or "",
+            "anomaly_flags":        d.get("anomaly_flags") or {},
+            "steps":                d.get("sop_steps_json") or {},
+            "calculation_time_ms":  d.get("calculation_time_ms"),
+
+            # ── Flat inputs (used in field builders) ─────────────────────────
             "inputs": {
-                "hsn_code": d.get("hsn_code", ""),
+                "hsn_code":          d.get("hsn_code", ""),
                 "country_of_origin": d.get("country_of_origin", ""),
-                "quantity": d.get("quantity"),
-                "unit": d.get("unit", "NOS"),
-                "currency": d.get("input_currency", "USD"),
-                "product_description": "",   # not stored separately in M04 table
+                "port_code":         d.get("port_code", ""),
+                "quantity":          d.get("quantity"),
+                "unit":              d.get("unit", "NOS"),
+                "currency":          d.get("input_currency", "USD"),
+                "product_description": "",
             },
         }
 
@@ -522,9 +578,39 @@ class M05BoEEngine:
         except (TypeError, ValueError):
             total_payable = None
 
-        ex_rate = m04_data.get("exchange_rate_used") or _pick("exchange_rate")
+        ex_rate  = m04_data.get("exchange_rate_used") or _pick("exchange_rate")
         currency = m04_inputs.get("currency") or _pick("currency") or "USD"
         freight_anomaly = 1 if (m04_data.get("anomaly_flags") or {}).get("has_anomalies") else 0
+
+        # ── CIF components ─────────────────────────────────────────────────────
+        fob_cost_foreign  = m04_data.get("fob_cost")
+        freight_foreign   = m04_data.get("freight")
+        insurance_foreign = m04_data.get("insurance")
+        cif_foreign       = m04_data.get("cif_foreign")
+
+        # ── Individual duty figures ────────────────────────────────────────────
+        bcd_amount = m04_data.get("bcd_inr")
+        sws_amount = m04_data.get("sws_inr")
+        add_amount = m04_data.get("add_inr") or 0
+        cvd_amount = m04_data.get("cvd_inr") or 0
+        sgd_amount = m04_data.get("sgd_inr") or 0
+
+        # ── Duty rates ────────────────────────────────────────────────────────
+        bcd_rate  = m04_data.get("bcd_rate")
+        sws_rate  = m04_data.get("sws_rate", 10.0)
+        igst_rate = m04_data.get("igst_rate")
+        igst_base = m04_data.get("igst_base")
+        add_rate  = m04_data.get("add_rate", 0.0)
+        cvd_rate  = m04_data.get("cvd_rate", 0.0)
+        sgd_rate  = m04_data.get("sgd_rate", 0.0)
+        add_notification_ref = m04_data.get("add_notification_ref", "")
+
+        # ── FTA ───────────────────────────────────────────────────────────────
+        fta_applicable     = m04_data.get("fta_applicable", False)
+        fta_agreement_code = m04_data.get("fta_agreement_code", "")
+        fta_pref_bcd       = m04_data.get("fta_preferential_bcd")
+        fta_roo_eligible   = m04_data.get("fta_roo_eligible")
+        fta_exemption      = m04_data.get("fta_exemption_amount", 0.0)
 
         today = date.today().isoformat()
 
@@ -598,7 +684,8 @@ class M05BoEEngine:
 
         port_of_shipment = _pick(
             "port_of_loading", "port_of_shipment", "origin_port",
-            "loading_port", "pol", "departure_port", "from_port"
+            "loading_port", "pol", "departure_port", "from_port",
+            extra_sources=[extracted]
         )
 
         # Arrival date — direct field, then ETA, then BL date + 21 days estimate
@@ -670,9 +757,56 @@ class M05BoEEngine:
             "total_payable": total_payable,
             "currency": currency,
             "exchange_rate": ex_rate,
+            "exchange_rate_source": m04_data.get("exchange_rate_source"),
             "freight_anomaly_flag": freight_anomaly,
             "document_id": document_id,
             "m04_computation_uuid": m04_data.get("computation_uuid"),
+
+            # ── Full M04 duty breakdown (all SOP steps) ───────────────────────
+            "m04_duty_breakdown": {
+                # Step 1 — CIF
+                "fob_cost_foreign":  fob_cost_foreign,
+                "freight_foreign":   freight_foreign,
+                "insurance_foreign": insurance_foreign,
+                "cif_foreign":       cif_foreign,
+                "input_currency":    currency,
+                # Step 2 — AV
+                "assessable_value_inr": custom_value_inr,
+                "exchange_rate":     ex_rate,
+                "exchange_rate_source": m04_data.get("exchange_rate_source"),
+                # Step 3 — BCD
+                "bcd_rate":    bcd_rate,
+                "bcd_amount":  bcd_amount,
+                # Step 4 — SWS
+                "sws_rate":    sws_rate,
+                "sws_amount":  sws_amount,
+                # Step 5 — IGST
+                "igst_base":   igst_base,
+                "igst_rate":   igst_rate,
+                "igst_amount": gst,
+                # Step 6 — ADD
+                "add_rate":             add_rate,
+                "add_amount":           add_amount,
+                "add_notification_ref": add_notification_ref,
+                # Step 7 — CVD / SGD
+                "cvd_rate":   cvd_rate,
+                "cvd_amount": cvd_amount,
+                "sgd_rate":   sgd_rate,
+                "sgd_amount": sgd_amount,
+                # Step 8 — FTA
+                "fta_applicable":      fta_applicable,
+                "fta_agreement_code":  fta_agreement_code,
+                "fta_preferential_bcd": fta_pref_bcd,
+                "fta_roo_eligible":    fta_roo_eligible,
+                "fta_exemption_amount": fta_exemption,
+                # Totals
+                "total_duty_inr":    custom_duty,
+                "total_payable_inr": total_payable,
+                # Audit
+                "formula_text":        m04_data.get("formula_text"),
+                "calculation_time_ms": m04_data.get("calculation_time_ms"),
+                "anomaly_flags":       m04_data.get("anomaly_flags") or {},
+            } if m04_data else None,
         }
 
     def _build_line_items(
@@ -753,19 +887,45 @@ class M05BoEEngine:
                     m04_data.get("assessable_value_inr")
                     or duty_calc.get("assessable_value")
                 ),
+                # ── Duty amounts ─────────────────────────────────────────────
                 "bcd_amount":  m04_data.get("bcd_inr")  or duties.get("bcd")  or 0,
                 "sws_amount":  m04_data.get("sws_inr")  or duties.get("sws")  or 0,
                 "igst_amount": m04_data.get("igst_inr") or duties.get("igst") or 0,
                 "add_amount":  m04_data.get("add_inr")  or duties.get("add")  or 0,
                 "cvd_amount":  m04_data.get("cvd_inr")  or duties.get("cvd")  or 0,
+                "sgd_amount":  m04_data.get("sgd_inr")  or 0,
                 "total_duty":  (
                     m04_data.get("total_duty_inr")
                     or duty_calc.get("total_duty")
                     or raw.get("total_duty")
                 ),
-                # Unit price for reference
-                "unit_price": raw.get("unit_price") or raw.get("price"),
+                # ── Duty rates ───────────────────────────────────────────────
+                "bcd_rate":   m04_data.get("bcd_rate"),
+                "sws_rate":   m04_data.get("sws_rate", 10.0),
+                "igst_rate":  m04_data.get("igst_rate"),
+                "igst_base":  m04_data.get("igst_base"),
+                "add_rate":   m04_data.get("add_rate", 0.0),
+                "cvd_rate":   m04_data.get("cvd_rate", 0.0),
+                "sgd_rate":   m04_data.get("sgd_rate", 0.0),
+                "add_notification_ref": m04_data.get("add_notification_ref", ""),
+                # ── FTA ──────────────────────────────────────────────────────
+                "fta_applicable":      m04_data.get("fta_applicable", False),
+                "fta_agreement_code":  m04_data.get("fta_agreement_code", ""),
+                "fta_preferential_bcd": m04_data.get("fta_preferential_bcd"),
+                "fta_roo_eligible":    m04_data.get("fta_roo_eligible"),
+                "fta_exemption_amount": m04_data.get("fta_exemption_amount", 0.0),
+                # ── CIF components ───────────────────────────────────────────
+                "fob_cost_foreign":    m04_data.get("fob_cost"),
+                "freight_foreign":     m04_data.get("freight"),
+                "insurance_foreign":   m04_data.get("insurance"),
+                "cif_foreign":         m04_data.get("cif_foreign"),
+                "input_currency":      m04_data.get("input_currency", "USD"),
+                "exchange_rate":       m04_data.get("exchange_rate_used"),
+                # ── Unit price for reference ─────────────────────────────────
+                "unit_price":  raw.get("unit_price") or raw.get("price"),
                 "total_value": raw.get("total_value") or raw.get("amount") or raw.get("total"),
+                # ── M04 audit ref ────────────────────────────────────────────
+                "m04_computation_uuid": m04_data.get("computation_uuid", ""),
             }
 
         if raw_items:
@@ -823,6 +983,26 @@ class M05BoEEngine:
 
         self.db.commit()
         filing_id = row[0]
+
+        # ── Generate human-readable BOE number ────────────────────────────
+        # Format: BOE/{YEAR}/{PORT}/{ID:06d}  e.g. BOE/2026/INMAA1/000042
+        year = date.today().year
+        port = str(boe_fields.get("port_of_import") or "INMAA1").upper().replace("/", "-")
+        boe_number = f"BOE/{year}/{port}/{filing_id:06d}"
+
+        # Stamp it into both the dedicated column and the boe_fields_json blob
+        boe_fields["boe_number"] = boe_number
+        self.db.execute(text("""
+            UPDATE m05_boe_filings
+               SET boe_number      = :bn,
+                   boe_fields_json = CAST(:bfj AS JSONB)
+             WHERE id = :fid
+        """), {
+            "bn":  boe_number,
+            "bfj": json.dumps(boe_fields, default=str),
+            "fid": filing_id,
+        })
+        self.db.commit()
 
         # Insert line items
         self.db.execute(text(

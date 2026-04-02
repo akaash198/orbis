@@ -443,6 +443,7 @@ const BillOfEntryPanel = () => {
   const [selectedDocId, setSelectedDocId] = useState('');
   const [portOfImport, setPortOfImport] = useState('INMAA1');
   const [m04Uuid, setM04Uuid] = useState('');
+  const [m04FromEngine, setM04FromEngine] = useState(null); // banner data when auto-loaded from M04
 
   // BoE fields state — all 22 fields + extras
   const emptyFields = {
@@ -531,10 +532,34 @@ const BillOfEntryPanel = () => {
     } catch (_) {}
   };
 
+  // ── Auto-load M04 computation from DutyCalculatorPanel on mount ─────────────
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('lastDutyComputation');
+      if (!stored) return;
+      const saved = JSON.parse(stored);
+      if (!saved?.computation_uuid) return;
+      // Only use if saved within the last 24 hours
+      const ageMs = Date.now() - new Date(saved.saved_at).getTime();
+      if (ageMs > 24 * 60 * 60 * 1000) return;
+
+      setM04Uuid(saved.computation_uuid);
+      setM04FromEngine(saved);
+
+      // If the computation was tied to a specific document, auto-select and prepare
+      if (saved.document_id) {
+        setSelectedDocId(String(saved.document_id));
+        // Slight delay so documents list has time to load
+        setTimeout(() => handlePrepare(String(saved.document_id), portOfImport, saved.computation_uuid), 800);
+      }
+    } catch (_) {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Step 1: Prepare ─────────────────────────────────────────────────────────
-  const handlePrepare = async (docIdArg, portArg) => {
+  const handlePrepare = async (docIdArg, portArg, uuidArg) => {
     const docId = docIdArg !== undefined ? docIdArg : selectedDocId;
     const port  = portArg  !== undefined ? portArg  : portOfImport;
+    const uuid  = uuidArg  !== undefined ? uuidArg  : m04Uuid;
     if (!docId) {
       setError('Please select a document first');
       return;
@@ -547,11 +572,33 @@ const BillOfEntryPanel = () => {
       const res = await axios.post(`${API_BASE}/m05/prepare`, {
         document_id: parseInt(docId),
         port_of_import: port,
-        m04_computation_uuid: m04Uuid || null,
+        m04_computation_uuid: uuid || null,
       }, authHeaders());
 
       const data = res.data;
       const newFields = { ...emptyFields, ...data.boe_fields, port_of_import: port };
+
+      // ── Auto-fill country_of_origin and port_of_shipment from M04 duty engine ──
+      // If the backend extraction left either field blank, fall back to the value
+      // the user entered in the Duty Calculator (stored in lastDutyComputation).
+      // Per user requirement: port_of_shipment is treated as the same as country_of_origin.
+      const _isEmpty = v => !v || ['', 'null', 'N/A', 'n/a', 'None'].includes(String(v).trim());
+      const m04ExtraFields = {}; // track which fields we fill from M04
+      try {
+        const m04Stored = JSON.parse(localStorage.getItem('lastDutyComputation') || '{}');
+        const m04Coo = m04Stored?.country_of_origin;
+        if (m04Coo) {
+          if (_isEmpty(newFields.country_of_origin)) {
+            newFields.country_of_origin = m04Coo;
+            m04ExtraFields.country_of_origin = true;
+          }
+          if (_isEmpty(newFields.port_of_shipment)) {
+            newFields.port_of_shipment = m04Coo;
+            m04ExtraFields.port_of_shipment = true;
+          }
+        }
+      } catch (_) {}
+
       setBoeFields(newFields);
 
       // Compute which fields were auto-populated (non-empty, non-default) by the backend
@@ -564,6 +611,8 @@ const BillOfEntryPanel = () => {
           filled[k] = true;
         }
       });
+      // Mark M04-sourced fields as autofilled too
+      Object.keys(m04ExtraFields).forEach(k => { filled[k] = true; });
       setAutoFilledFields(filled);
 
       setLineItems(data.line_items || []);
@@ -713,6 +762,7 @@ const BillOfEntryPanel = () => {
     setSuccess(null);
     setSelectedDocId('');
     setM04Uuid('');
+    setM04FromEngine(null);
     setAutoFilledFields({});
     setShowAllFields(false);
     setStep(0);
@@ -812,6 +862,34 @@ const BillOfEntryPanel = () => {
       {error && <Alert type="error">⚠ {error}</Alert>}
       {success && <Alert type="success">✓ {success}</Alert>}
 
+      {/* ── M04 Engine banner — shown when duty calc was auto-loaded ───────── */}
+      {m04FromEngine && (
+        <Alert type="success" style={{ marginBottom: 16 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>
+              Duty Engine calculations loaded automatically
+            </div>
+            <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.6 }}>
+              AV: ₹{Number(m04FromEngine.assessable_value_inr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+              &nbsp;·&nbsp;
+              Custom Duty: ₹{Number(m04FromEngine.total_duty_inr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+              &nbsp;·&nbsp;
+              IGST: ₹{Number(m04FromEngine.igst_amount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+              &nbsp;·&nbsp;
+              Total Payable: ₹{Number(m04FromEngine.total_payable_inr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontSize: 11, opacity: 0.75, marginTop: 4 }}>
+              UUID: <code style={{ opacity: 0.9 }}>{m04FromEngine.computation_uuid}</code>
+            </div>
+          </div>
+          <button
+            onClick={() => { setM04FromEngine(null); localStorage.removeItem('lastDutyComputation'); }}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 16, opacity: 0.7, alignSelf: 'flex-start' }}
+            title="Dismiss"
+          >✕</button>
+        </Alert>
+      )}
+
       {/* ── STEP 0: Select document ──────────────────────────────────────────── */}
       {(step === 0 || loadingPrepare) && (
         <Card>
@@ -826,7 +904,7 @@ const BillOfEntryPanel = () => {
                 setAutoFilledFields({});
                 setStep(0);
                 setShowAllFields(false);
-                if (v) handlePrepare(v, portOfImport);
+                if (v) handlePrepare(v, portOfImport, m04Uuid || undefined);
               }}>
                 <option value="">-- Select a document to auto-fill BoE --</option>
                 {documents.map(doc => (
@@ -936,9 +1014,25 @@ const BillOfEntryPanel = () => {
             <FieldGrid>
               <FieldGroup>
                 <FieldLabel>BoE Number</FieldLabel>
-                <FieldInput value={boeFields.boe_number || ''} readOnly
-                  placeholder="Assigned by ICEGATE after submission"
-                  style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+                {boeFields.boe_number ? (
+                  <div style={{
+                    padding: '9px 14px',
+                    borderRadius: 8,
+                    background: 'rgba(59,130,246,0.12)',
+                    border: '1px solid rgba(59,130,246,0.35)',
+                    fontFamily: 'monospace',
+                    fontWeight: 700,
+                    fontSize: '0.95rem',
+                    color: 'var(--t-btn-color)',
+                    letterSpacing: '0.04em',
+                  }}>
+                    {boeFields.boe_number}
+                  </div>
+                ) : (
+                  <FieldInput value="" readOnly
+                    placeholder="Generated on prepare"
+                    style={{ opacity: 0.5, cursor: 'not-allowed' }} />
+                )}
               </FieldGroup>
               <FieldGroup>
                 <FieldLabel>Date of Filing *</FieldLabel>
@@ -1111,7 +1205,7 @@ const BillOfEntryPanel = () => {
             <CardTitle>Financial Details</CardTitle>
             <FieldGrid>
               <FieldGroup>
-                <FieldLabelWithBadge label="Custom Value (INR) *" fieldKey="custom_value_inr" />
+                <FieldLabelWithBadge label="Custom Value / Assessable Value (INR) *" fieldKey="custom_value_inr" />
                 <FieldInput
                   error={fieldError('custom_value')}
                   autofilled={fieldState('custom_value_inr') === 'autofilled'}
@@ -1120,7 +1214,7 @@ const BillOfEntryPanel = () => {
                   onChange={e => updateField('custom_value_inr', e.target.value)} type="number" min="0" />
               </FieldGroup>
               <FieldGroup>
-                <FieldLabelWithBadge label="Custom Duty (INR)" fieldKey="custom_duty" />
+                <FieldLabelWithBadge label="Total Custom Duty (INR)" fieldKey="custom_duty" />
                 <FieldInput
                   autofilled={fieldState('custom_duty') === 'autofilled'}
                   value={boeFields.custom_duty || ''}
@@ -1162,6 +1256,130 @@ const BillOfEntryPanel = () => {
             </FieldGrid>
           </Card>
 
+          {/* ── M04 Duty Engine Full Breakdown ─────────────────── */}
+          {boeFields.m04_duty_breakdown && (() => {
+            const d = boeFields.m04_duty_breakdown;
+            const inr = v => v != null ? `₹${Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
+            const pct = v => v != null ? `${Number(v).toFixed(2)}%` : '—';
+            const fx  = v => v != null ? Number(v).toLocaleString('en-US', { minimumFractionDigits: 4 }) : '—';
+            return (
+              <Card style={{ border: '1px solid rgba(59,130,246,0.35)', background: 'rgba(59,130,246,0.03)' }}>
+                <CardTitle style={{ color: 'var(--t-btn-color)' }}>
+                  M04 Duty Engine — Full SOP Breakdown
+                  {boeFields.m04_computation_uuid && (
+                    <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--t-text-sub)', marginLeft: 10 }}>
+                      UUID: {boeFields.m04_computation_uuid?.slice(0, 8)}…
+                    </span>
+                  )}
+                </CardTitle>
+
+                {/* Step 1 — CIF */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t-btn-color)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                    Step 1 — CIF Value ({d.input_currency || boeFields.currency || 'USD'})
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 8 }}>
+                    {[
+                      ['FOB Cost', `${d.input_currency || ''} ${fx(d.fob_cost_foreign)}`],
+                      ['Freight', `${d.input_currency || ''} ${fx(d.freight_foreign)}`],
+                      ['Insurance', `${d.input_currency || ''} ${fx(d.insurance_foreign)}`],
+                      ['CIF Total', `${d.input_currency || ''} ${fx(d.cif_foreign)}`],
+                    ].map(([label, val]) => (
+                      <div key={label} style={{ background: 'var(--t-bg-dark)', borderRadius: 7, padding: '8px 12px', border: '1px solid var(--t-border)' }}>
+                        <div style={{ fontSize: 10, color: 'var(--t-text-sub)', textTransform: 'uppercase', marginBottom: 3 }}>{label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--t-text)' }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Step 2 — AV */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#A78BFA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                    Step 2 — Assessable Value (INR)
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 8 }}>
+                    {[
+                      ['Exchange Rate', `1 ${d.input_currency || ''}=₹${fx(d.exchange_rate)}`],
+                      ['Source', d.exchange_rate_source || '—'],
+                      ['AV (INR)', inr(d.assessable_value_inr)],
+                    ].map(([label, val]) => (
+                      <div key={label} style={{ background: 'var(--t-bg-dark)', borderRadius: 7, padding: '8px 12px', border: '1px solid var(--t-border)' }}>
+                        <div style={{ fontSize: 10, color: 'var(--t-text-sub)', textTransform: 'uppercase', marginBottom: 3 }}>{label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#A78BFA' }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Steps 3–7 duty table */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                    Steps 3–7 — Duty Components
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--t-border)' }}>
+                        {['Component', 'Rate', 'Amount (INR)', 'Notes'].map(h => (
+                          <th key={h} style={{ textAlign: 'left', padding: '6px 10px', fontSize: 11, color: 'var(--t-text-sub)', fontWeight: 600 }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: 'BCD (Step 3)', rate: pct(d.bcd_rate), amount: inr(d.bcd_amount), note: '', color: '#3B82F6' },
+                        { label: 'SWS (Step 4)', rate: pct(d.sws_rate), amount: inr(d.sws_amount), note: '10% of BCD', color: '#F59E0B' },
+                        { label: `IGST (Step 5) — Base: ${inr(d.igst_base)}`, rate: pct(d.igst_rate), amount: inr(d.igst_amount), note: 'AV+BCD+SWS', color: '#10B981' },
+                        d.add_amount > 0 && { label: 'ADD (Step 6)', rate: pct(d.add_rate), amount: inr(d.add_amount), note: d.add_notification_ref || '', color: '#EF4444' },
+                        d.cvd_amount > 0 && { label: 'CVD (Step 7)', rate: pct(d.cvd_rate), amount: inr(d.cvd_amount), note: '', color: '#EC4899' },
+                        d.sgd_amount > 0 && { label: 'SGD (Step 7)', rate: pct(d.sgd_rate), amount: inr(d.sgd_amount), note: '', color: '#F97316' },
+                      ].filter(Boolean).map((row, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid var(--t-border-light)' }}>
+                          <td style={{ padding: '7px 10px', color: row.color, fontWeight: 600 }}>{row.label}</td>
+                          <td style={{ padding: '7px 10px', color: 'var(--t-text)' }}>{row.rate}</td>
+                          <td style={{ padding: '7px 10px', color: 'var(--t-text)', fontWeight: 600 }}>{row.amount}</td>
+                          <td style={{ padding: '7px 10px', color: 'var(--t-text-sub)', fontSize: 11 }}>{row.note}</td>
+                        </tr>
+                      ))}
+                      <tr style={{ borderTop: '2px solid var(--t-border)', background: 'rgba(59,130,246,0.05)' }}>
+                        <td style={{ padding: '8px 10px', fontWeight: 700, color: 'var(--t-text)' }}>TOTAL DUTY</td>
+                        <td />
+                        <td style={{ padding: '8px 10px', fontWeight: 700, fontSize: 15, color: '#60a5fa' }}>{inr(d.total_duty_inr)}</td>
+                        <td />
+                      </tr>
+                      <tr style={{ background: 'rgba(16,185,129,0.05)' }}>
+                        <td style={{ padding: '8px 10px', fontWeight: 700, color: 'var(--t-text)' }}>TOTAL PAYABLE (AV + Duty)</td>
+                        <td />
+                        <td style={{ padding: '8px 10px', fontWeight: 700, fontSize: 15, color: '#34d399' }}>{inr(d.total_payable_inr)}</td>
+                        <td />
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Step 8 — FTA */}
+                {d.fta_applicable && d.fta_agreement_code && (
+                  <div style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, fontSize: 13 }}>
+                    <span style={{ color: '#34d399', fontWeight: 700 }}>✓ FTA Applicable — {d.fta_agreement_code}</span>
+                    <span style={{ color: 'var(--t-text-sub)', marginLeft: 12 }}>
+                      Preferential BCD: {pct(d.fta_preferential_bcd)}
+                      {d.fta_roo_eligible === true  && ' · RoO: Eligible'}
+                      {d.fta_roo_eligible === false && ' · RoO: Not eligible'}
+                      {d.fta_exemption_amount > 0   && ` · Duty saved: ${inr(d.fta_exemption_amount)}`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Anomaly flags */}
+                {d.anomaly_flags?.has_anomalies && (
+                  <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, fontSize: 12, color: '#fbbf24' }}>
+                    ⚠ Anomaly flags from M04: {(d.anomaly_flags?.anomalies || []).map(a => a.message || a.code).join(' · ')}
+                  </div>
+                )}
+              </Card>
+            );
+          })()}
+
           {/* ── Customs Officer (assigned post-clearance) ──────── */}
           <Card>
             <CardTitle>Clearance Details (Assigned by Customs)</CardTitle>
@@ -1190,38 +1408,70 @@ const BillOfEntryPanel = () => {
           {/* ── Line Items ─────────────────────────────────────── */}
           {lineItems.length > 0 && (
             <Card>
-              <CardTitle>Line Items ({lineItems.length})</CardTitle>
+              <CardTitle>Line Items ({lineItems.length}) — Full Duty Breakdown</CardTitle>
               <div style={{ overflowX: 'auto' }}>
                 <LineItemsTable>
                   <thead>
                     <tr>
                       <th>#</th>
                       <th>Description</th>
-                      <th>HSN Code</th>
-                      <th>Qty / Unit</th>
-                      <th>CIF (INR)</th>
+                      <th>HSN</th>
+                      <th>Qty</th>
+                      <th>CIF ({lineItems[0]?.input_currency || 'FC'})</th>
+                      <th>AV (INR)</th>
+                      <th>BCD Rate</th>
                       <th>BCD</th>
+                      <th>SWS</th>
+                      <th>IGST Rate</th>
                       <th>IGST</th>
+                      <th>ADD</th>
+                      <th>CVD</th>
+                      <th>SGD</th>
                       <th>Total Duty</th>
+                      <th>Total Payable</th>
+                      <th>FTA</th>
                       <th>COO</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {lineItems.map((item, idx) => (
-                      <tr key={idx}>
-                        <td>{idx + 1}</td>
-                        <td style={{ maxWidth: 220 }}>
-                          {item.description_of_goods || item.product_description || '—'}
-                        </td>
-                        <td>{item.hsn_code || '—'}</td>
-                        <td>{fmt(item.quantity)} {item.unit || 'NOS'}</td>
-                        <td>{fmtInr(item.custom_value_inr || item.assessable_value)}</td>
-                        <td>{fmtInr(item.bcd_amount)}</td>
-                        <td>{fmtInr(item.igst_amount)}</td>
-                        <td>{fmtInr(item.total_duty)}</td>
-                        <td>{item.country_of_origin || '—'}</td>
-                      </tr>
-                    ))}
+                    {lineItems.map((item, idx) => {
+                      const inr = v => v != null && v !== 0 ? fmtInr(v) : <span style={{ color: 'var(--t-text-sub)', fontSize: 11 }}>NIL</span>;
+                      const totalPayable = item.assessable_value != null && item.total_duty != null
+                        ? (parseFloat(item.assessable_value) + parseFloat(item.total_duty)).toFixed(2)
+                        : null;
+                      return (
+                        <tr key={idx}>
+                          <td>{idx + 1}</td>
+                          <td style={{ maxWidth: 200, whiteSpace: 'normal', lineHeight: 1.3 }}>
+                            {item.description_of_goods || item.product_description || '—'}
+                          </td>
+                          <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{item.hsn_code || '—'}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{fmt(item.quantity)} {item.unit || 'NOS'}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{item.cif_foreign != null ? Number(item.cif_foreign).toFixed(2) : '—'}</td>
+                          <td style={{ color: '#A78BFA', fontWeight: 600 }}>{fmtInr(item.custom_value_inr || item.assessable_value)}</td>
+                          <td style={{ color: '#3B82F6' }}>{item.bcd_rate != null ? `${item.bcd_rate}%` : '—'}</td>
+                          <td style={{ color: '#3B82F6', fontWeight: 600 }}>{inr(item.bcd_amount)}</td>
+                          <td>{inr(item.sws_amount)}</td>
+                          <td style={{ color: '#10B981' }}>{item.igst_rate != null ? `${item.igst_rate}%` : '—'}</td>
+                          <td style={{ color: '#10B981', fontWeight: 600 }}>{inr(item.igst_amount)}</td>
+                          <td style={{ color: item.add_amount > 0 ? '#EF4444' : undefined }}>
+                            {item.add_amount > 0 ? (
+                              <span title={item.add_notification_ref || ''}>{inr(item.add_amount)}</span>
+                            ) : inr(0)}
+                          </td>
+                          <td>{inr(item.cvd_amount)}</td>
+                          <td>{inr(item.sgd_amount)}</td>
+                          <td style={{ color: '#60a5fa', fontWeight: 700 }}>{inr(item.total_duty)}</td>
+                          <td style={{ color: '#34d399', fontWeight: 700 }}>{fmtInr(totalPayable)}</td>
+                          <td>
+                            {item.fta_applicable && item.fta_agreement_code
+                              ? <span style={{ color: '#34d399', fontSize: 11, fontWeight: 700 }} title={`Preferential BCD: ${item.fta_preferential_bcd}%`}>✓ {item.fta_agreement_code}</span>
+                              : <span style={{ color: 'var(--t-text-sub)', fontSize: 11 }}>—</span>}
+                          </td>
+                          <td>{item.country_of_origin || '—'}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </LineItemsTable>
               </div>
@@ -1307,14 +1557,24 @@ const BillOfEntryPanel = () => {
         <div ref={statusRef}>
           <Card>
             <CardTitle>ICEGATE Submission Result</CardTitle>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
               <StatusBadge status={submission.status}>
                 {submission.status === 'ACCEPTED' ? '✓' : submission.status === 'REJECTED' ? '✗' : '⚠'}{' '}
                 {submission.status}
               </StatusBadge>
+              {boeFields.boe_number && (
+                <span style={{
+                  fontFamily: 'monospace', fontWeight: 700, fontSize: '0.9rem',
+                  color: 'var(--t-btn-color)',
+                  background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
+                  padding: '3px 10px', borderRadius: 6,
+                }}>
+                  {boeFields.boe_number}
+                </span>
+              )}
               {submission.icegate_boe_number && (
                 <span style={{ color: 'var(--t-text-sub)', fontSize: 13 }}>
-                  BoE Ref: <strong style={{ color: 'var(--t-text)' }}>{submission.icegate_boe_number}</strong>
+                  ICEGATE Ref: <strong style={{ color: 'var(--t-text)' }}>{submission.icegate_boe_number}</strong>
                 </span>
               )}
               {submission.ack_number && (
@@ -1399,12 +1659,12 @@ const BillOfEntryPanel = () => {
             <LineItemsTable>
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>BoE Number</th>
                   <th>Port</th>
-                  <th>ICEGATE BoE</th>
+                  <th>ICEGATE Ref</th>
                   <th>Status</th>
                   <th>Risk</th>
-                  <th>Filed</th>
+                  <th>Filed At</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1414,9 +1674,20 @@ const BillOfEntryPanel = () => {
                     setFilingId(f.id);
                     setStep(4);
                   }}>
-                    <td>{f.id}</td>
+                    <td>
+                      <span style={{
+                        fontFamily: 'monospace', fontWeight: 700,
+                        fontSize: '0.82rem', color: 'var(--t-btn-color)',
+                        background: 'rgba(59,130,246,0.10)',
+                        padding: '2px 7px', borderRadius: 5,
+                        border: '1px solid rgba(59,130,246,0.25)',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {f.boe_number || `#${f.id}`}
+                      </span>
+                    </td>
                     <td>{f.port_of_import}</td>
-                    <td>{f.icegate_boe_number || '—'}</td>
+                    <td style={{ fontSize: 11 }}>{f.icegate_boe_number || '—'}</td>
                     <td><StatusBadge status={f.icegate_status}>{f.icegate_status}</StatusBadge></td>
                     <td><RiskBand band={f.risk_band}>{f.risk_band} ({Math.round(f.risk_score || 0)})</RiskBand></td>
                     <td style={{ fontSize: 11, color: 'var(--t-text-sub)' }}>

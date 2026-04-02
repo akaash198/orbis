@@ -9,7 +9,6 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import theme from '../../styles/theme';
-import JsonViewer from './JsonViewer';
 import BarcodeViewer from './BarcodeViewer';
 
 // File validation constants
@@ -308,147 +307,227 @@ export const validateFile = (file) => {
   };
 };
 
-// Component to display a summary of the extracted data
-const ExtractedSummary = ({ data }) => {
+// Keys that are shown separately, are internal pipeline metadata, or are
+// confidence scores — none of these belong in the extracted document fields grid.
+const SKIP_KEYS = new Set([
+  // Shown as line-items table below
+  'barcodes', 'items', 'line_items',
+  // Confidence / scoring — internal M02 metrics, not document content
+  'overall_confidence', 'confidence_scores', 'raw_confidence_scores',
+  'field_confidence', 'confidence', 'document_type_confidence',
+  'calibration_deltas',
+  // Pipeline / routing metadata
+  'pipeline_stages', 'pipeline_duration_ms', 'review_queue', 'routing',
+  'scorer', 'doc_confidence',
+]);
+
+// Display all extracted fields in a structured grid + line items table
+const AllFieldsDisplay = ({ data, onDownload }) => {
   if (!data) return null;
 
-  // Extract contact information
-  const address = data.address || data.sender_address || data.recipient_address || {};
-  const contact = {
-    phone: data.phone || data.contact_phone || data.sender_phone || data.recipient_phone,
-    email: data.email || data.contact_email || data.sender_email || data.recipient_email,
-    name: data.contact_name || data.sender_name || data.recipient_name
-  };
+  const scalarEntries = Object.entries(data).filter(
+    ([k, v]) => !SKIP_KEYS.has(k) && v !== null && v !== undefined && v !== ''
+  );
 
-  // Extract document metadata
-  const metadata = {
-    docType: data.document_type || data.doc_type,
-    date: data.date || data.document_date || data.issue_date,
-    number: data.document_number || data.invoice_number || data.reference_number,
-    currency: data.currency
-  };
+  const lineItems = data.line_items || data.items;
+  const hasLineItems = Array.isArray(lineItems) && lineItems.length > 0;
+  const lineItemCols = hasLineItems
+    ? Array.from(new Set(lineItems.flatMap(r => (r && typeof r === 'object' ? Object.keys(r) : []))))
+    : [];
 
-  // Extract financial data
-  const financial = {
-    total: data.total_amount || data.total || data.amount,
-    tax: data.tax_amount || data.vat || data.tax,
-    subtotal: data.subtotal || data.net_amount
-  };
-  
-  // Format address as a string if it's an object
-  const formatAddress = (addr) => {
-    if (typeof addr === 'string') return addr;
-    if (typeof addr !== 'object') return '';
-    
-    const parts = [];
-    if (addr.street) parts.push(addr.street);
-    if (addr.city) parts.push(addr.city);
-    if (addr.state) parts.push(addr.state);
-    if (addr.postal_code || addr.zip) parts.push(addr.postal_code || addr.zip);
-    if (addr.country) parts.push(addr.country);
-    
-    return parts.join(', ');
+  const confidenceColor = (v) => {
+    if (v == null) return '#64748b';
+    if (v >= 0.85) return '#16a34a';
+    if (v >= 0.75) return '#ca8a04';
+    if (v >= 0.55) return '#ea580c';
+    return '#dc2626';
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-      {/* Document Metadata */}
-      {(metadata.docType || metadata.date || metadata.number) && (
-        <div style={{ padding: '8px', borderBottom: '1px solid var(--t-border)' }}>
-          <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--t-text-sub)', marginBottom: '4px' }}>
-            📄 Document Info
-          </div>
-          <div style={{ fontSize: '14px', color: 'var(--t-text)', display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
-            {metadata.docType && <div style={{ display: 'flex', gap: '4px' }}><strong>Type:</strong> {metadata.docType}</div>}
-            {metadata.date && <div style={{ display: 'flex', gap: '4px' }}><strong>Date:</strong> {metadata.date}</div>}
-            {metadata.number && <div style={{ display: 'flex', gap: '4px' }}><strong>Number:</strong> {metadata.number}</div>}
-            {metadata.currency && <div style={{ display: 'flex', gap: '4px' }}><strong>Currency:</strong> {metadata.currency}</div>}
-          </div>
-        </div>
-      )}
-      
-      {/* Contact Information */}
-      {(contact.name || contact.phone || contact.email || formatAddress(address)) && (
-        <div style={{ padding: '8px', borderBottom: '1px solid var(--t-border)' }}>
-          <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--t-text-sub)', marginBottom: '4px' }}>
-            👤 Contact Information
-          </div>
-          <div style={{ fontSize: '14px', color: 'var(--t-text)', display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
-            {contact.name && <div style={{ display: 'flex', gap: '4px' }}><strong>Name:</strong> {contact.name}</div>}
-            {contact.phone && <div style={{ display: 'flex', gap: '4px' }}><strong>Phone:</strong> {contact.phone}</div>}
-            {contact.email && <div style={{ display: 'flex', gap: '4px' }}><strong>Email:</strong> {contact.email}</div>}
-            {formatAddress(address) && (
-              <div style={{ display: 'flex', gap: '4px' }}><strong>Address:</strong> {formatAddress(address)}</div>
-            )}
+    <div>
+      {/* Document type + confidence banner */}
+      {(data.document_type || data.overall_confidence != null) && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          background: '#0c1a3a', border: '1px solid #1e3a5f',
+          borderRadius: 8, padding: '10px 14px', marginBottom: 16,
+        }}>
+          <span style={{ fontSize: 22 }}>📄</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+              Document Type
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
+              {data.document_type || '—'}
+            </div>
           </div>
         </div>
       )}
-      
-      {/* Financial Information */}
-      {(financial.total || financial.tax || financial.subtotal) && (
-        <div style={{ padding: '8px', borderBottom: '1px solid var(--t-border)' }}>
-          <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--t-text-sub)', marginBottom: '4px' }}>
-            💰 Financial Details
+
+      {/* All scalar fields grid */}
+      {scalarEntries.length > 0 && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: 8, marginBottom: 18,
+        }}>
+          {scalarEntries.map(([key, value]) => {
+            if (key === 'document_type' || key === 'overall_confidence') return null;
+            const displayVal = typeof value === 'object' ? JSON.stringify(value) : String(value);
+            return (
+              <div key={key} style={{
+                background: '#0a1628', border: '1px solid #1e3a5f',
+                borderRadius: 7, padding: '8px 11px',
+              }}>
+                <div style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3, fontWeight: 600 }}>
+                  {key.replace(/_/g, ' ')}
+                </div>
+                <div style={{ fontSize: 13, color: '#e2e8f0', wordBreak: 'break-word', lineHeight: 1.4 }}>
+                  {displayVal || <span style={{ color: '#475569', fontStyle: 'italic' }}>—</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Line items table */}
+      {hasLineItems && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+            Line Items ({lineItems.length})
           </div>
-          <div style={{ fontSize: '14px', color: 'var(--t-text)', display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
-            {financial.subtotal && <div style={{ display: 'flex', gap: '4px' }}><strong>Subtotal:</strong> {financial.subtotal}</div>}
-            {financial.tax && <div style={{ display: 'flex', gap: '4px' }}><strong>Tax:</strong> {financial.tax}</div>}
-            {financial.total && <div style={{ display: 'flex', gap: '4px' }}><strong>Total:</strong> {financial.total}</div>}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, color: '#e2e8f0' }}>
+              <thead>
+                <tr>
+                  {lineItemCols.map(c => (
+                    <th key={c} style={{
+                      background: '#0c1a3a', border: '1px solid #1e3a5f',
+                      padding: '6px 10px', textAlign: 'left',
+                      color: '#94a3b8', textTransform: 'uppercase',
+                      fontSize: 10, letterSpacing: '0.05em', whiteSpace: 'nowrap',
+                    }}>
+                      {c.replace(/_/g, ' ')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lineItems.map((row, ri) => (
+                  <tr key={ri} style={{ background: ri % 2 === 0 ? '#0a1628' : '#0d1f3c' }}>
+                    {lineItemCols.map(c => (
+                      <td key={c} style={{ border: '1px solid #1e3a5f', padding: '5px 10px', whiteSpace: 'nowrap' }}>
+                        {row && row[c] != null ? String(row[c]) : '—'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
-      
-      {/* Items are handled separately in the HSCodeSection */}
-      {!data.items && data.description && (
-        <div style={{ padding: '8px', borderBottom: '1px solid var(--t-border)' }}>
-          <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--t-text-sub)', marginBottom: '4px' }}>
-            📝 Description
-          </div>
-          <div style={{ fontSize: '14px', color: 'var(--t-text)' }}>
-            <div>{data.description}</div>
-          </div>
-        </div>
+
+      {/* Download JSON button */}
+      {onDownload && (
+        <button
+          onClick={onDownload}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(135deg, #065f46, #047857)',
+            color: '#6ee7b7', border: '1px solid #10b981',
+            borderRadius: 7, padding: '9px 18px',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          ⬇ Download JSON
+        </button>
       )}
     </div>
   );
 };
 
-const DocumentPreviewModal = ({ isOpen, onClose, document, extractedData, onSaveJson }) => {
+const HSN_KEYS = ['hsn_code', 'hs_code', 'hscode', 'HS Code/HSN Code', 'HSN Code',
+                   'hs_tariff_code', 'tariff_code', 'commodity_code'];
+const DESC_KEYS = ['goods_description', 'Goods Description', 'product_description',
+                   'Product Description', 'Description of Goods', 'Items/Goods Description', 'description'];
+
+const DocumentPreviewModal = ({ isOpen, onClose, document, extractedData, onSaveJson, onMoveToHSN }) => {
   const [fileUrl, setFileUrl] = useState(null);
   const [validationError, setValidationError] = useState(null);
+  const [hsnEditMode, setHsnEditMode] = useState(false);
+  const [hsnEditValue, setHsnEditValue] = useState('');
 
   useEffect(() => {
-    if (isOpen && document?.file) {
-      console.log('Setting up preview for document:', document);
-      
-      // Validate file
-      const validation = validateFile(document.file);
-      if (!validation.isValid) {
-        setValidationError(validation.errors.join(', '));
-        return;
-      } else {
-        setValidationError(null);
-      }
-      
-      // Create object URL for the file
-      let url;
-      if (document.uploaded && document.url) {
-        url = document.url;
-      } else if (document.file) {
-        url = URL.createObjectURL(document.file);
-      }
-      setFileUrl(url);
+    if (!isOpen || !document?.file) return;
+
+    const validation = validateFile(document.file);
+    if (!validation.isValid) {
+      setValidationError(validation.errors.join(', '));
+      return;
     }
+    setValidationError(null);
+
+    if (document.uploaded && document.url) {
+      setFileUrl(document.url);
+      return;
+    }
+
+    // Use FileReader to produce a data URL — unlike blob: URLs, data URLs
+    // are never downloaded automatically by the browser when used in an iframe.
+    const reader = new FileReader();
+    reader.onload = (e) => setFileUrl(e.target.result);
+    reader.readAsDataURL(document.file);
   }, [isOpen, document]);
-  
-  // Clean up object URLs when component unmounts or document changes
+
+  // Reset fileUrl when modal closes
+  useEffect(() => { if (!isOpen) setFileUrl(null); }, [isOpen]);
+
+  // Detect HSN and description from extractedData
+  const ef = extractedData || {};
+  let detectedHsn = null;
+  for (const k of HSN_KEYS) { if (ef[k]) { detectedHsn = String(ef[k]).trim(); break; } }
+  if (!detectedHsn && Array.isArray(ef.line_items)) {
+    outer: for (const item of ef.line_items) {
+      for (const k of HSN_KEYS) { if (item?.[k]) { detectedHsn = String(item[k]).trim(); break outer; } }
+    }
+  }
+
+  let detectedDescription = null;
+  for (const k of DESC_KEYS) { if (ef[k]) { detectedDescription = String(ef[k]).trim(); break; } }
+  if (!detectedDescription && Array.isArray(ef.line_items) && ef.line_items.length > 0) {
+    const first = ef.line_items[0];
+    detectedDescription = (first?.description || first?.goods_description || first?.product || first?.name || '').trim() || null;
+  }
+
+  // Reset edit state whenever the modal opens with new data
   useEffect(() => {
-    return () => {
-      if (fileUrl && fileUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(fileUrl);
-      }
-    };
-  }, [fileUrl]);
+    setHsnEditMode(false);
+    setHsnEditValue(detectedHsn || '');
+  }, [isOpen, detectedHsn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Build navItems and call onMoveToHSN — used by both footer actions
+  const buildNavItems = (hsnOverride) => {
+    const hsn = hsnOverride !== undefined ? hsnOverride : (detectedHsn || '');
+    let items = [];
+    if (Array.isArray(ef.line_items) && ef.line_items.length > 0) {
+      items = ef.line_items
+        .map(item => ({
+          description: item.description || item.goods_description || item.product || item.name || '',
+          hsCode:   item.hsn_code || item.hs_code || item.hscode || hsn,
+          hsn_code: item.hsn_code || item.hs_code || item.hscode || hsn,
+          quantity: item.quantity || item.qty || 1,
+          unit_price:  item.unit_price || '',
+          total_value: item.total_value || item.amount || '',
+        }))
+        .filter(i => i.description.trim());
+    }
+    if (items.length === 0 && detectedDescription) {
+      items = [{ description: detectedDescription, hsCode: hsn, hsn_code: hsn, quantity: ef.quantity || 1 }];
+    }
+    return items;
+  };
 
   const computeNoDataMessage = () => {
     // validationError handled above (shown in UI)
@@ -536,10 +615,11 @@ const DocumentPreviewModal = ({ isOpen, onClose, document, extractedData, onSave
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                {/* Try embed first for PDFs */}
+                {/* Use iframe for PDFs to prevent automatic browser download */}
                 {document?.file?.type === 'application/pdf' || document?.file?.name?.toLowerCase().endsWith('.pdf') ? (
-                  <embed 
+                  <iframe
                     src={fileUrl}
+                    title={document?.file?.name || 'PDF Preview'}
                     width="100%"
                     height="100%"
                     style={{
@@ -583,47 +663,117 @@ const DocumentPreviewModal = ({ isOpen, onClose, document, extractedData, onSave
           <ExtractionDataPane>
             {hasExtraction ? (
               <DataContent>
-                <div style={{ marginBottom: '20px' }}>
-                  <h3 style={{ margin: '0 0 15px', color: 'var(--t-text)' }}>Extracted Data</h3>
-                  <ExtractedSummary data={extractedData} />
-                </div>
-                {/* Show barcode section if extraction was attempted */}
-                {extractedData?.barcodes !== undefined && (
-                  <>
-                    {extractedData.barcodes.length > 0 ? (
-                      <BarcodeViewer barcodes={extractedData.barcodes} />
-                    ) : (
-                      <div style={{
-                        background: 'var(--t-card)',
-                        borderRadius: '8px',
-                        padding: '12px 16px',
-                        marginBottom: '16px',
-                        border: '1px solid var(--t-border)',
-                        color: 'var(--t-text-sub)',
-                        fontSize: '14px'
-                      }}>
-                        ⚠️ Barcode scanning was enabled but no QR codes or barcodes were detected in this document.
-                        {' '}Check browser console and backend logs for details.
-                      </div>
-                    )}
-                  </>
+                <AllFieldsDisplay data={extractedData} onDownload={onSaveJson} />
+                {extractedData?.barcodes?.length > 0 && (
+                  <BarcodeViewer barcodes={extractedData.barcodes} />
                 )}
-                <div>
-                  <JsonViewer data={extractedData} />
-                </div>
               </DataContent>
             ) : (
               <DataContent>
-                <NoDataMessage>
-                  {noDataMessage}
-                </NoDataMessage>
+                <NoDataMessage>{noDataMessage}</NoDataMessage>
               </DataContent>
             )}
           </ExtractionDataPane>
         </ModalBody>
 
-        {/* Footer: Save JSON / Cancel */}
         <ModalFooter>
+          {/* ── HSN action area (left side) ── */}
+          {onMoveToHSN && extractedData && (() => {
+            // Case 1: HSN code found
+            if (detectedHsn) return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 'auto', flexWrap: 'wrap' }}>
+                {hsnEditMode ? (
+                  <>
+                    <input
+                      value={hsnEditValue}
+                      onChange={e => setHsnEditValue(e.target.value)}
+                      placeholder="Enter HSN code"
+                      style={{
+                        background: 'var(--t-card)', color: 'var(--t-text)',
+                        border: '1px solid #3b82f6', borderRadius: 6,
+                        padding: '6px 10px', fontSize: 13, width: 140,
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const trimmed = hsnEditValue.trim();
+                        if (trimmed) { onMoveToHSN(buildNavItems(trimmed)); }
+                      }}
+                      style={{
+                        background: '#1d4ed8', color: '#fff', border: 'none',
+                        borderRadius: 6, padding: '7px 14px', fontSize: 13,
+                        fontWeight: 700, cursor: 'pointer',
+                      }}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => { setHsnEditMode(false); setHsnEditValue(detectedHsn); }}
+                      style={{
+                        background: 'transparent', color: 'var(--t-text-sub)',
+                        border: '1px solid var(--t-border)', borderRadius: 6,
+                        padding: '7px 12px', fontSize: 13, cursor: 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => onMoveToHSN(buildNavItems(detectedHsn))}
+                      style={{
+                        background: 'linear-gradient(135deg, #052e16, #166534)',
+                        color: '#4ade80', border: '1px solid #16a34a',
+                        borderRadius: 6, padding: '8px 18px',
+                        fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      }}
+                    >
+                      🏷 Use this HSN Code: {detectedHsn}
+                    </button>
+                    <button
+                      onClick={() => { setHsnEditMode(true); setHsnEditValue(detectedHsn); }}
+                      style={{
+                        background: 'transparent', color: '#93c5fd',
+                        border: '1px solid #3b82f6', borderRadius: 6,
+                        padding: '8px 14px', fontSize: 13, cursor: 'pointer',
+                      }}
+                    >
+                      ✏ Edit
+                    </button>
+                  </>
+                )}
+              </div>
+            );
+
+            // Case 2: No HSN but description available
+            if (detectedDescription) return (
+              <button
+                onClick={() => onMoveToHSN(buildNavItems(''))}
+                style={{
+                  background: 'linear-gradient(135deg, #1e3a5f, #1d4ed8)',
+                  color: '#fff', border: '1px solid #3b82f6',
+                  borderRadius: 6, padding: '8px 18px',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  marginRight: 'auto',
+                }}
+              >
+                🔍 Search HSN
+              </button>
+            );
+
+            // Case 3: Neither HSN nor description
+            return (
+              <div style={{
+                marginRight: 'auto', padding: '7px 14px',
+                background: '#3b1a1a', border: '1px solid #f87171',
+                borderRadius: 6, fontSize: 12, color: '#fca5a5',
+              }}>
+                ⚠ Insufficient data to determine HSN. Please review the document.
+              </div>
+            );
+          })()}
+
           <button
             onClick={onClose}
             style={{
@@ -634,18 +784,6 @@ const DocumentPreviewModal = ({ isOpen, onClose, document, extractedData, onSave
           >
             Close
           </button>
-          {onSaveJson && (
-            <button
-              onClick={onSaveJson}
-              style={{
-                background: 'linear-gradient(135deg, #1d4ed8, #6366f1)', color: 'white',
-                border: 'none', borderRadius: 6,
-                padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 700,
-              }}
-            >
-              💾 Save as JSON
-            </button>
-          )}
         </ModalFooter>
       </ModalContent>
     </Modal>

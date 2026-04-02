@@ -9,7 +9,7 @@ import styled from 'styled-components';
 import theme from '../../styles/theme';
 import FileCard from '../common/FileCard';
 import useDocumentProcessing from '../../hooks/useDocumentProcessing';
-import { hsCodeService, chatService, API_URL as BACKEND_URL, apiClient, m02Service } from '../../services/api';
+import { hsCodeService, chatService, API_URL as BACKEND_URL, apiClient, m02Service, documentService } from '../../services/api';
 import JsonViewer from '../common/JsonViewer';
 import DocumentPreviewModal, { validateFile } from '../common/DocumentPreviewModal';
 
@@ -800,614 +800,6 @@ const ExtractionFilename = styled.p`
   word-break: break-word;
 `;
 
-// ── M02 Pipeline Results Panel ────────────────────────────────────────────────
-const CONFIDENCE_COLOR = (score) => {
-  if (score === null || score === undefined) return '#64748b';
-  if (score >= 0.95) return '#16a34a';
-  if (score >= 0.90) return '#ca8a04';
-  if (score >= 0.70) return '#ea580c';
-  return '#dc2626';
-};
-
-const CONFIDENCE_LABEL = (score) => {
-  if (score === null || score === undefined) return 'N/A';
-  if (score >= 0.95) return 'Auto';
-  if (score >= 0.90) return 'Soft Review';
-  if (score >= 0.70) return 'Hard Review';
-  return 'Quality Alert';
-};
-
-const PIPELINE_STAGES = ['OCR', 'Layout', 'Identify', 'Extract', 'GLiNER', 'Normalise', 'Confidence', 'Route'];
-
-function M02Panel({ m02State, fileState, onClose, onSubmitReview, onDownloadJson }) {
-  const [editedFields, setEditedFields]   = useState({});
-  const [submitted, setSubmitted]         = useState(false);
-  const [saving, setSaving]               = useState(false);
-  const [saveError, setSaveError]         = useState(null);
-  const [activeTab, setActiveTab]         = useState('fields'); // 'fields' | 'corrections' | 'json'
-
-  const { status, result, error } = m02State;
-  const filename = fileState?.file?.name || fileState?.name || 'Document';
-
-  // Fields that need manual correction
-  const lowFields  = Object.keys(result?.fields_low        || {});
-  const hardFields = Object.keys(result?.fields_hard_review || {});
-  const softFields = Object.keys(result?.fields_soft_review || {});
-  const allReviewFields = [...new Set([...lowFields, ...hardFields, ...softFields])];
-
-  // How many review fields have been touched by the user
-  const correctedCount = allReviewFields.filter(f => editedFields[f] !== undefined && editedFields[f] !== '').length;
-
-  const handleFieldEdit = (key, value) => {
-    setEditedFields(prev => ({ ...prev, [key]: value }));
-    setSaveError(null);
-  };
-
-  const handleSaveCorrections = async () => {
-    const merged = { ...(result?.normalised_fields || {}), ...editedFields };
-    setSaving(true);
-    setSaveError(null);
-    try {
-      await onSubmitReview(merged);
-      setSubmitted(true);
-    } catch (err) {
-      setSaveError(err?.response?.data?.detail || err.message || 'Save failed');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Switch to corrections tab automatically when quality_alert
-  useEffect(() => {
-    if (result?.quality_alert && activeTab === 'fields') {
-      setActiveTab('corrections');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result?.quality_alert]);
-
-  const queueColor = {
-    auto: '#16a34a',
-    soft_review: '#ca8a04',
-    hard_review: '#ea580c',
-    quality_alert: '#dc2626',
-    pending: '#6366f1',
-    processing: '#6366f1',
-    error: '#dc2626',
-  };
-
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0,0,0,0.7)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }}>
-      <div style={{
-        background: 'var(--t-card)', border: '1px solid var(--t-border)', borderRadius: 12,
-        width: '90%', maxWidth: 900, maxHeight: '90vh', overflow: 'auto',
-        padding: 24, position: 'relative', color: 'var(--t-text)'
-      }}>
-        <style>{`@keyframes m02pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`}</style>
-        <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 16, background: 'transparent', border: 'none', color: 'var(--t-text-sub)', fontSize: 20, cursor: 'pointer' }}>✕</button>
-        <h2 style={{ margin: '0 0 4px', color: 'var(--t-btn-color)', fontSize: 18 }}>M02 AI Extraction Pipeline</h2>
-        <p style={{ margin: '0 0 16px', color: 'var(--t-text-sub)', fontSize: 13 }}>{filename}</p>
-
-        {/* Pipeline stage progress */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          {PIPELINE_STAGES.map((stage, i) => {
-            const done = status === 'done';
-            const running = status === 'starting' || status === 'processing';
-            return (
-              <div key={stage} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{
-                  padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                  background: done ? '#1e3a2f' : running ? '#1e3a5f' : 'var(--t-bg-dark)',
-                  border: `1px solid ${done ? '#16a34a' : running ? '#60a5fa' : 'var(--t-border)'}`,
-                  color: done ? '#4ade80' : running ? 'var(--t-btn-color)' : 'var(--t-text-sub)',
-                  animation: running ? 'm02pulse 1.5s ease-in-out infinite' : 'none',
-                  animationDelay: running ? `${i * 0.15}s` : '0s',
-                }}>
-                  {done ? '✓ ' : running ? '⟳ ' : ''}{stage}
-                </div>
-                {i < PIPELINE_STAGES.length - 1 && <span style={{ color: running ? '#60a5fa' : 'var(--t-text-sub)' }}>→</span>}
-              </div>
-            );
-          })}
-        </div>
-
-        {status === 'starting' || status === 'processing' ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--t-btn-color)' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>⟳</div>
-            <div>Running M02 pipeline... This may take 30-60 seconds.</div>
-            <div style={{ fontSize: 12, color: 'var(--t-text-sub)', marginTop: 8 }}>OCR → Layout → Field Extraction → GLiNER → Normalisation → Confidence → Routing</div>
-          </div>
-        ) : status === 'error' ? (
-          <div style={{ color: '#f87171', padding: 16, background: '#450a0a', borderRadius: 8 }}>
-            Pipeline error: {error || 'Unknown error'}
-          </div>
-        ) : status === 'done' && result && result.review_status === 'error' ? (
-          <div style={{ color: '#f87171', padding: 20, background: '#450a0a', borderRadius: 8, textAlign: 'center' }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>⚠</div>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Pipeline failed on the server</div>
-            <div style={{ fontSize: 12, color: '#fca5a5', marginBottom: 16 }}>
-              The document was received but extraction could not complete. Check backend logs for details.
-            </div>
-            <button
-              onClick={() => { onClose(); }}
-              style={{ background: '#7f1d1d', color: '#fca5a5', border: '1px solid #dc2626', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontSize: 13 }}
-            >
-              Close &amp; Retry
-            </button>
-          </div>
-        ) : status === 'done' && result ? (
-          <>
-            {/* Document Type Identification Banner */}
-            {result.document_type && result.document_type !== 'unknown' ? (
-              <div style={{
-                background: (result.document_type_color || '#3b82f6') + '18',
-                border: `2px solid ${result.document_type_color || '#3b82f6'}`,
-                borderRadius: 10,
-                padding: '14px 18px',
-                marginBottom: 16,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                flexWrap: 'wrap',
-              }}>
-                <div style={{ fontSize: 32 }}>{result.document_type_icon || '📄'}</div>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontSize: 11, color: 'var(--t-text-sub)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
-                    Document Identified
-                  </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: result.document_type_color || '#3b82f6', lineHeight: 1.2 }}>
-                    {result.document_type_display || result.document_type}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--t-text-sub)', marginTop: 3 }}>
-                    {result.document_type_description || ''}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right', minWidth: 80 }}>
-                  <div style={{ fontSize: 11, color: 'var(--t-text-sub)', marginBottom: 2 }}>Confidence</div>
-                  <div style={{
-                    fontSize: 22, fontWeight: 800,
-                    color: result.document_type_confidence >= 0.85 ? '#16a34a'
-                         : result.document_type_confidence >= 0.70 ? '#ca8a04'
-                         : '#ea580c',
-                  }}>
-                    {result.document_type_confidence != null
-                      ? `${(result.document_type_confidence * 100).toFixed(0)}%`
-                      : 'N/A'}
-                  </div>
-                </div>
-                {result.document_type_signals && result.document_type_signals.length > 0 && (
-                  <div style={{ width: '100%', marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 10, color: 'var(--t-text-sub)', marginRight: 2 }}>Signals:</span>
-                    {result.document_type_signals.slice(0, 6).map((sig, i) => (
-                      <span key={i} style={{
-                        fontSize: 10, background: 'var(--t-card)', border: '1px solid var(--t-border)',
-                        borderRadius: 4, padding: '2px 6px', color: 'var(--t-text-sub)',
-                      }}>{sig}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div style={{
-                background: 'var(--t-card)', border: '1px solid var(--t-border)', borderRadius: 10,
-                padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12,
-              }}>
-                <div style={{ fontSize: 24 }}>❓</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--t-text-sub)' }}>Document type could not be identified</div>
-                  <div style={{ fontSize: 11, color: 'var(--t-text-sub)' }}>Extraction was performed using the generic template</div>
-                </div>
-              </div>
-            )}
-
-            {/* Summary row */}
-            <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 120, background: 'var(--t-card)', borderRadius: 8, padding: '10px 14px', border: `2px solid ${queueColor[result.review_queue] || 'var(--t-border)'}` }}>
-                <div style={{ fontSize: 11, color: 'var(--t-text-sub)', marginBottom: 4 }}>REVIEW QUEUE</div>
-                <div style={{ fontWeight: 700, color: queueColor[result.review_queue] || 'var(--t-text)', fontSize: 14 }}>
-                  {(result.review_queue || 'N/A').replace('_', ' ').toUpperCase()}
-                </div>
-              </div>
-              <div style={{ flex: 1, minWidth: 120, background: 'var(--t-card)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--t-border)' }}>
-                <div style={{ fontSize: 11, color: 'var(--t-text-sub)', marginBottom: 4 }}>OVERALL CONFIDENCE</div>
-                <div style={{ fontWeight: 700, color: CONFIDENCE_COLOR(result.overall_confidence), fontSize: 20 }}>
-                  {result.overall_confidence != null ? `${(result.overall_confidence * 100).toFixed(1)}%` : 'N/A'}
-                </div>
-              </div>
-              <div style={{ flex: 1, minWidth: 120, background: 'var(--t-card)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--t-border)' }}>
-                <div style={{ fontSize: 11, color: 'var(--t-text-sub)', marginBottom: 4 }}>STATUS</div>
-                <div style={{ fontWeight: 700, color: 'var(--t-btn-color)', fontSize: 14 }}>
-                  {submitted ? '✅ APPROVED' : (result.review_status || 'pending').replace('_', ' ').toUpperCase()}
-                </div>
-              </div>
-              {result.pipeline_duration_ms && (
-                <div style={{ flex: 1, minWidth: 120, background: 'var(--t-card)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--t-border)' }}>
-                  <div style={{ fontSize: 11, color: 'var(--t-text-sub)', marginBottom: 4 }}>PIPELINE TIME</div>
-                  <div style={{ fontWeight: 700, color: 'var(--t-text)', fontSize: 14 }}>{(result.pipeline_duration_ms / 1000).toFixed(1)}s</div>
-                </div>
-              )}
-            </div>
-
-            {/* Quality alert banner with progress */}
-            {result.quality_alert && !submitted && (
-              <div style={{ background: '#450a0a', border: '1px solid #dc2626', borderRadius: 10, padding: '14px 18px', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                  <div>
-                    <div style={{ color: '#f87171', fontWeight: 700, fontSize: 14, marginBottom: 3 }}>
-                      ⚠ Quality Alert — HITL (Manual Correction and Approval Required)
-                    </div>
-                    <div style={{ color: '#fca5a5', fontSize: 12 }}>
-                      {lowFields.length} field{lowFields.length !== 1 ? 's' : ''} have confidence below 70%. Please review and correct them before approving.
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab('corrections')}
-                    style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Go to Corrections →
-                  </button>
-                </div>
-                {allReviewFields.length > 0 && (
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 6, background: '#7f1d1d', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${Math.round((correctedCount / allReviewFields.length) * 100)}%`, background: correctedCount === allReviewFields.length ? '#16a34a' : '#f59e0b', borderRadius: 3, transition: 'width 0.3s' }} />
-                      </div>
-                      <span style={{ fontSize: 11, color: '#fca5a5', whiteSpace: 'nowrap' }}>
-                        {correctedCount}/{allReviewFields.length} corrected
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Soft/hard review banner */}
-            {!result.quality_alert && allReviewFields.length > 0 && !submitted && (
-              <div style={{ background: '#431407', border: '1px solid #ea580c', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                  <div>
-                    <div style={{ color: '#fb923c', fontWeight: 700, fontSize: 13, marginBottom: 2 }}>
-                      🔍 Human Review Needed — {allReviewFields.length} field{allReviewFields.length !== 1 ? 's' : ''}
-                    </div>
-                    <div style={{ color: '#fed7aa', fontSize: 12 }}>
-                      {hardFields.length > 0 && `${hardFields.length} hard review`}
-                      {hardFields.length > 0 && softFields.length > 0 && ' · '}
-                      {softFields.length > 0 && `${softFields.length} soft review`}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab('corrections')}
-                    style={{ background: '#ea580c', color: 'white', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Review Fields →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Tab bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {[
-                  { key: 'fields', label: 'All Fields' },
-                  { key: 'corrections', label: `Corrections${allReviewFields.length > 0 ? ` (${allReviewFields.length})` : ''}`, highlight: allReviewFields.length > 0 },
-                  { key: 'json', label: 'JSON' },
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    style={{
-                      padding: '5px 14px', fontSize: 12, fontWeight: 600, borderRadius: 6, cursor: 'pointer',
-                      border: tab.highlight && activeTab !== tab.key ? '1px solid #ea580c' : 'none',
-                      background: activeTab === tab.key ? '#1d4ed8' : 'var(--t-card)',
-                      color: activeTab === tab.key ? 'white' : tab.highlight ? '#fb923c' : 'var(--t-text-sub)',
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              {onDownloadJson && (
-                <button
-                  onClick={onDownloadJson}
-                  style={{ padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: 'pointer', background: '#065f46', border: '1px solid #10b981', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: 5 }}
-                >
-                  ⬇ Download JSON
-                </button>
-              )}
-            </div>
-
-            {/* ── CORRECTIONS TAB ── */}
-            {activeTab === 'corrections' && (
-              <>
-                {submitted || result.review_status === 'approved' ? (
-                  <ApprovedBanner />
-                ) : allReviewFields.length === 0 ? (
-                  <div style={{ padding: 24, textAlign: 'center', color: '#4ade80', fontSize: 14 }}>
-                    ✓ No fields require correction — all confidence scores are acceptable.
-                    <div style={{ marginTop: 16 }}>
-                      <SaveButton onClick={handleSaveCorrections} saving={saving} label="Approve & Continue" />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ fontSize: 12, color: 'var(--t-text-sub)', marginBottom: 12 }}>
-                      Edit the values below. Changes are uploaded automatically when you click <strong style={{ color: 'var(--t-text)' }}>Save &amp; Approve</strong>.
-                    </div>
-
-                    {/* Low confidence fields (quality_alert) */}
-                    {lowFields.length > 0 && (
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626', display: 'inline-block' }} />
-                          Very Low Confidence (&lt;70%) — {lowFields.length} field{lowFields.length !== 1 ? 's' : ''}
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10 }}>
-                          {lowFields.map(key => (
-                            <CorrectionField
-                              key={key}
-                              fieldKey={key}
-                              result={result}
-                              editedFields={editedFields}
-                              onEdit={handleFieldEdit}
-                              borderColor="#dc2626"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Hard review fields */}
-                    {hardFields.filter(f => !lowFields.includes(f)).length > 0 && (
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#fb923c', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ea580c', display: 'inline-block' }} />
-                          Hard Review (70–89%) — needs re-entry
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10 }}>
-                          {hardFields.filter(f => !lowFields.includes(f)).map(key => (
-                            <CorrectionField
-                              key={key}
-                              fieldKey={key}
-                              result={result}
-                              editedFields={editedFields}
-                              onEdit={handleFieldEdit}
-                              borderColor="#ea580c"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Soft review fields */}
-                    {softFields.filter(f => !lowFields.includes(f) && !hardFields.includes(f)).length > 0 && (
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-                          Soft Review (90–94%) — confirm AI value
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10 }}>
-                          {softFields.filter(f => !lowFields.includes(f) && !hardFields.includes(f)).map(key => (
-                            <CorrectionField
-                              key={key}
-                              fieldKey={key}
-                              result={result}
-                              editedFields={editedFields}
-                              onEdit={handleFieldEdit}
-                              borderColor="#f59e0b"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Progress + save button */}
-                    {allReviewFields.length > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                        <div style={{ flex: 1, height: 6, background: 'var(--t-card)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${Math.round((correctedCount / allReviewFields.length) * 100)}%`, background: correctedCount === allReviewFields.length ? '#16a34a' : '#f59e0b', borderRadius: 3, transition: 'width 0.3s' }} />
-                        </div>
-                        <span style={{ fontSize: 11, color: 'var(--t-text-sub)', whiteSpace: 'nowrap' }}>
-                          {correctedCount}/{allReviewFields.length} corrected
-                        </span>
-                      </div>
-                    )}
-
-                    {saveError && (
-                      <div style={{ background: '#450a0a', border: '1px solid #dc2626', borderRadius: 6, padding: '8px 12px', marginBottom: 10, color: '#f87171', fontSize: 12 }}>
-                        ✕ {saveError}
-                      </div>
-                    )}
-
-                    <SaveButton onClick={handleSaveCorrections} saving={saving} label="Save Corrections & Approve" />
-                  </>
-                )}
-              </>
-            )}
-
-            {/* ── ALL FIELDS TAB ── */}
-            {activeTab === 'fields' && (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8, marginBottom: 20 }}>
-                  {Object.entries(result.normalised_fields || result.extracted_fields || {}).map(([key, value]) => {
-                    if (key === 'line_items') return null;
-                    const score = result.confidence_scores?.[key];
-                    const needsReview = allReviewFields.includes(key);
-                    const isArray = Array.isArray(value);
-                    const rawDisplay = value != null ? (isArray ? JSON.stringify(value, null, 2) : String(value)) : '';
-                    const displayValue = editedFields[key] !== undefined ? editedFields[key] : rawDisplay;
-                    return (
-                      <div key={key} style={{ background: 'var(--t-card)', borderRadius: 8, padding: '10px 12px', border: `1px solid ${needsReview ? CONFIDENCE_COLOR(score) : 'var(--t-border)'}` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                          <span style={{ fontSize: 11, color: 'var(--t-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{key.replace(/_/g, ' ')}</span>
-                          {score != null && (
-                            <span style={{ fontSize: 10, fontWeight: 700, color: CONFIDENCE_COLOR(score), background: CONFIDENCE_COLOR(score) + '20', padding: '2px 6px', borderRadius: 10 }}>
-                              {CONFIDENCE_LABEL(score)} {(score * 100).toFixed(0)}%
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: 13, color: value ? 'var(--t-text)' : 'var(--t-text-sub)', fontStyle: value ? 'normal' : 'italic' }}>
-                          {displayValue || '(not found)'}
-                        </div>
-                        {needsReview && !submitted && (
-                          <div style={{ fontSize: 10, color: CONFIDENCE_COLOR(score), marginTop: 4 }}>
-                            ✎ Editable in Corrections tab
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Line items table */}
-                {(() => {
-                  const fields = result.normalised_fields || result.extracted_fields || {};
-                  const items = fields.line_items;
-                  if (!items || !Array.isArray(items) || items.length === 0) return null;
-                  const cols = Array.from(new Set(items.flatMap(r => (r && typeof r === 'object' ? Object.keys(r) : []))));
-                  if (cols.length === 0) return null;
-                  return (
-                    <div style={{ marginBottom: 20 }}>
-                      <h4 style={{ color: 'var(--t-btn-color)', fontSize: 13, margin: '0 0 8px' }}>Line Items ({items.length})</h4>
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, color: 'var(--t-text)' }}>
-                          <thead>
-                            <tr>{cols.map(c => <th key={c} style={{ background: 'var(--t-card)', border: '1px solid var(--t-border)', padding: '6px 10px', textAlign: 'left', color: 'var(--t-text-sub)', textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{c.replace(/_/g, ' ')}</th>)}</tr>
-                          </thead>
-                          <tbody>
-                            {items.map((row, ri) => (
-                              <tr key={ri} style={{ background: ri % 2 === 0 ? 'var(--t-card-elevated)' : 'var(--t-card)' }}>
-                                {cols.map(c => <td key={c} style={{ border: '1px solid var(--t-border)', padding: '5px 10px', whiteSpace: 'nowrap' }}>{row && row[c] != null ? String(row[c]) : '—'}</td>)}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {result.fields_auto && Object.keys(result.fields_auto).length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <span style={{ fontSize: 12, color: '#4ade80' }}>✓ Auto-approved ({Object.keys(result.fields_auto).length}): </span>
-                    <span style={{ fontSize: 12, color: 'var(--t-text-sub)' }}>{Object.keys(result.fields_auto).join(', ')}</span>
-                  </div>
-                )}
-
-                {submitted || result.review_status === 'approved' ? (
-                  <ApprovedBanner />
-                ) : result.review_queue !== 'auto' && (
-                  <SaveButton onClick={handleSaveCorrections} saving={saving} label="Approve & Upload" />
-                )}
-              </>
-            )}
-
-            {/* ── JSON TAB ── */}
-            {activeTab === 'json' && (
-              <pre style={{ background: 'var(--t-card)', border: '1px solid var(--t-border)', borderRadius: 8, padding: 16, fontSize: 12, color: 'var(--t-text)', overflowX: 'auto', overflowY: 'auto', maxHeight: 420, margin: 0, lineHeight: 1.6 }}>
-                {JSON.stringify({
-                  document_type: result.document_type,
-                  document_type_display: result.document_type_display,
-                  document_type_confidence: result.document_type_confidence,
-                  overall_confidence: result.overall_confidence,
-                  review_queue: result.review_queue,
-                  extracted_fields: result.normalised_fields || result.extracted_fields || {},
-                  corrections: editedFields,
-                  confidence_scores: result.confidence_scores,
-                  pipeline_duration_ms: result.pipeline_duration_ms,
-                }, null, 2)}
-              </pre>
-            )}
-          </>
-        ) : null}
-
-      </div>
-    </div>
-  );
-}
-
-// ── Shared sub-components used inside M02Panel ────────────────────────────────
-
-function CorrectionField({ fieldKey, result, editedFields, onEdit, borderColor }) {
-  const score        = result.confidence_scores?.[fieldKey];
-  const allFields    = result.normalised_fields || result.extracted_fields || {};
-  const originalVal  = allFields[fieldKey];
-  const rawDisplay   = originalVal != null ? String(originalVal) : '';
-  const currentValue = editedFields[fieldKey] !== undefined ? editedFields[fieldKey] : rawDisplay;
-  const isEdited     = editedFields[fieldKey] !== undefined && editedFields[fieldKey] !== rawDisplay;
-
-  return (
-    <div style={{ background: 'var(--t-card)', borderRadius: 8, padding: '12px 14px', border: `2px solid ${borderColor}` }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontSize: 11, color: 'var(--t-text-sub)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-          {fieldKey.replace(/_/g, ' ')}
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {isEdited && <span style={{ fontSize: 10, color: '#4ade80', fontWeight: 700 }}>✓ Edited</span>}
-          {score != null && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: CONFIDENCE_COLOR(score), background: CONFIDENCE_COLOR(score) + '22', padding: '2px 7px', borderRadius: 10 }}>
-              {(score * 100).toFixed(0)}%
-            </span>
-          )}
-        </div>
-      </div>
-      {rawDisplay && (
-        <div style={{ fontSize: 11, color: 'var(--t-text-sub)', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ color: 'var(--t-text-sub)' }}>AI extracted:</span>
-          <span style={{ color: 'var(--t-text-sub)', fontStyle: 'italic' }}>{rawDisplay}</span>
-        </div>
-      )}
-      <input
-        value={currentValue}
-        onChange={e => onEdit(fieldKey, e.target.value)}
-        placeholder={`Enter correct ${fieldKey.replace(/_/g, ' ')}…`}
-        style={{
-          width: '100%', background: 'var(--t-card)',
-          border: `1px solid ${isEdited ? '#22c55e' : '#60a5fa'}`,
-          borderRadius: 5, color: 'var(--t-text)', padding: '6px 10px',
-          fontSize: 13, boxSizing: 'border-box', outline: 'none',
-        }}
-      />
-    </div>
-  );
-}
-
-function SaveButton({ onClick, saving, label }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={saving}
-      style={{
-        background: saving ? '#374151' : 'linear-gradient(135deg, #1d4ed8, #6366f1)',
-        color: saving ? '#9ca3af' : 'white', border: 'none', borderRadius: 8,
-        padding: '11px 28px', fontSize: 14, fontWeight: 700,
-        cursor: saving ? 'not-allowed' : 'pointer',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}
-    >
-      {saving ? '⟳ Uploading…' : `✔ ${label}`}
-    </button>
-  );
-}
-
-function ApprovedBanner() {
-  return (
-    <div style={{ background: '#052e16', border: '1px solid #16a34a', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <span style={{ fontSize: 22 }}>🔍</span>
-      <div>
-        <div style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>✅ Approved — jumping to HSN / ECCN Engine…</div>
-        <div style={{ fontSize: 11, color: 'var(--t-text-sub)', marginTop: 2 }}>Extracted items are being sent to M03 Classification Engine</div>
-      </div>
-    </div>
-  );
-}
-
-// Component to display a summary of the extracted data
-// ExtractedSummary removed (not used in current DocumentPanel UI)
 
 const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) => {
   const [extractedFiles, setExtractedFiles] = useState([]);
@@ -1785,12 +1177,7 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
       filename: name,
       documentId: fileState?.documentId || null,
       document_type: m02Result?.document_type_display || null,
-      document_type_confidence: m02Result?.document_type_confidence || null,
       extracted_fields: m02Result?.normalised_fields || fileState?.extraction || null,
-      confidence_scores: m02Result?.confidence_scores || null,
-      overall_confidence: m02Result?.overall_confidence || null,
-      review_queue: m02Result?.review_queue || null,
-      pipeline_duration_ms: m02Result?.pipeline_duration_ms || null,
     };
     if (!payload.extracted_fields && !payload.document_type) {
       alert('No extracted data available yet. The M02 pipeline will run automatically after upload.');
@@ -1819,11 +1206,30 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
   const [fileClassifications, setFileClassifications] = useState({});
 
   const DOC_TYPE_META = {
-    invoice:           { display: 'Commercial Invoice', icon: '🧾' },
-    commercial_invoice:{ display: 'Commercial Invoice', icon: '🧾' },
-    packing_list:      { display: 'Packaging Label',    icon: '📦' },
-    airwaybill:        { display: 'Airway Bill',        icon: '✈️' },
-    bill_of_lading:    { display: 'Bill of Lading',     icon: '🚢' },
+    // ── Commercial documents ────────────────────────────────────────────────
+    commercial_invoice: { display: 'Commercial Invoice',   icon: '🧾' },
+    invoice:            { display: 'Commercial Invoice',   icon: '🧾' },
+    proforma_invoice:   { display: 'Proforma Invoice',     icon: '📋' },
+    purchase_order:     { display: 'Purchase Order',       icon: '🛒' },
+    // ── Shipping / transport documents ─────────────────────────────────────
+    packing_list:       { display: 'Packaging List',       icon: '📦' },
+    air_waybill:        { display: 'Airway Bill (AWB)',    icon: '✈️' },
+    airwaybill:         { display: 'Airway Bill (AWB)',    icon: '✈️' },
+    airway_bill:        { display: 'Airway Bill (AWB)',    icon: '✈️' },
+    bill_of_lading:     { display: 'Bill of Lading',       icon: '🚢' },
+    arrival_notice:     { display: 'Arrival Notice',       icon: '📬' },
+    // ── Compliance / customs documents ─────────────────────────────────────
+    certificate_of_origin: { display: 'Certificate of Origin', icon: '📜' },
+    letter_of_credit:   { display: 'Letter of Credit',    icon: '🏦' },
+    customs_declaration: { display: 'Customs Declaration', icon: '🛃' },
+    bill_of_entry:      { display: 'Bill of Entry',        icon: '📝' },
+    shipping_bill:      { display: 'Shipping Bill',        icon: '📤' },
+    // ── Other ──────────────────────────────────────────────────────────────
+    edi_transaction:    { display: 'EDI Transaction',      icon: '🔄' },
+    barcode_payload:    { display: 'Barcode Payload',      icon: '🔖' },
+    audio_transcript:   { display: 'Audio Transcript',     icon: '🎙️' },
+    voice_input:        { display: 'Voice Input',          icon: '🎤' },
+    unknown:            { display: 'Unknown Document',     icon: '❓' },
   };
 
   const classifyDocument = async (idx) => {
@@ -1868,7 +1274,6 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
     }
 
     setM02States(prev => ({ ...prev, [idx]: { status: 'starting', resultId: null, result: null, error: null } }));
-    setActiveM02Idx(idx);
 
     try {
       // m02Service.process uses postWithFallback — retries all known backend
@@ -1931,54 +1336,6 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
     }, 2500);
   };
 
-  const submitM02Review = async (idx, reviewedFields) => {
-    const m02 = m02States[idx];
-    if (!m02?.resultId) return;
-    try {
-      const { data } = await apiClient.patch(`/m02/review/${m02.resultId}`, {
-        reviewed_fields: reviewedFields,
-        approved: true,
-      });
-      setM02States(prev => ({
-        ...prev,
-        [idx]: { ...prev[idx], result: { ...prev[idx].result, review_status: data.review_status } }
-      }));
-
-      // Navigate to HSN/ECCN Engine with the approved document's items
-      const fields = { ...(m02?.result?.normalised_fields || {}), ...reviewedFields };
-      const fileState = files[idx];
-      const documentName = fileState?.file?.name || fileState?.name || 'Document';
-
-      // Build items: use line_items if present, else synthesize from goods_description
-      let navItems = [];
-      const lineItems = fields.line_items;
-      if (Array.isArray(lineItems) && lineItems.length > 0) {
-        navItems = lineItems.map(item => ({
-          description: item.description || item.goods_description || item.product || item.name || '',
-          quantity: item.quantity || item.qty || 1,
-          hsCode: item.hsn_code || item.hs_code || fields.hsn_code || '',
-          unit_price: item.unit_price || '',
-          total_value: item.total_value || item.amount || '',
-        }));
-      } else if (fields.goods_description) {
-        navItems = [{
-          description: fields.goods_description,
-          quantity: fields.quantity || 1,
-          hsCode: fields.hsn_code || '',
-          unit_price: fields.unit_price || '',
-          total_value: fields.total_value || '',
-        }];
-      }
-
-      if (navItems.length > 0 && onExtractedItems) {
-        setActiveM02Idx(null); // close M02 panel
-        onExtractedItems(navItems, documentName);
-      }
-    } catch (err) {
-      alert('Review submission failed: ' + (err?.response?.data?.detail || err.message));
-    }
-  };
-
   const handleDeleteFile = async (idx) => {
     const fileState = files[idx];
     const name = fileState?.file?.name || fileState?.name || `File ${idx + 1}`;
@@ -1988,7 +1345,6 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
         await apiClient.delete(`/react/documents/${fileState.documentId}`);
       }
       removeFile(idx);
-      if (activeM02Idx === idx) setActiveM02Idx(null);
     } catch (err) {
       alert('Delete failed: ' + (err?.response?.data?.detail || err.message));
     }
@@ -1999,6 +1355,38 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
     const refs = m02PollRef.current;
     return () => Object.values(refs).forEach(clearInterval);
   }, []);
+
+  // Store extracted items in file context when extraction finishes (no auto-navigation)
+  useEffect(() => {
+    Object.entries(m02States).forEach(([idxStr, m02]) => {
+      if (m02.status !== 'done' || !m02.result) return;
+      const idx = Number(idxStr);
+      const fields = m02.result.normalised_fields || m02.result.extracted_fields || {};
+      const fileState = files[idx];
+      if (!fileState) return;
+      let navItems = [];
+      const lineItems = fields.line_items;
+      if (Array.isArray(lineItems) && lineItems.length > 0) {
+        navItems = lineItems.map(item => ({
+          description: item.description || item.goods_description || item.product || item.name || '',
+          quantity: item.quantity || item.qty || 1,
+          hsCode: item.hsn_code || item.hs_code || fields.hsn_code || '',
+          unit_price: item.unit_price || '',
+          total_value: item.total_value || item.amount || '',
+        }));
+      } else if (fields.goods_description || fields['Goods Description']) {
+        navItems = [{
+          description: fields.goods_description || fields['Goods Description'] || '',
+          quantity: fields.quantity || 1,
+          hsCode: fields.hsn_code || '',
+        }];
+      }
+      if (navItems.length > 0) {
+        updateFile(idx, { extraction: { ...(fileState?.extraction || {}), items: navItems } });
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [m02States]);
 
   // Auto-upload newly added files (file selected → upload automatically)
   useEffect(() => {
@@ -2057,6 +1445,51 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
         document={currentPreviewFile}
         extractedData={currentPreviewExtraction}
         onSaveJson={previewModal.fileIndex !== null ? () => handleSaveJson(previewModal.fileIndex) : null}
+        onMoveToHSN={onExtractedItems ? (navItems) => {
+          const documentName = currentPreviewFile?.file?.name || currentPreviewFile?.name || 'Document';
+          if (navItems?.length > 0) {
+            // Persist the HSN (including any manual edits) back into the document
+            // state so it is consistent everywhere — preview, re-opens, HSN panel.
+            const idx = previewModal.fileIndex;
+            if (idx !== null) {
+              const persistedHsn = navItems.find(i => i.hsn_code || i.hsCode)?.hsn_code
+                                || navItems.find(i => i.hsn_code || i.hsCode)?.hsCode
+                                || null;
+              if (persistedHsn) {
+                // 1. Update the raw extraction blob on the file (in-memory, instant)
+                updateFile(idx, {
+                  extraction: { ...(currentPreviewFile?.extraction || {}), hsn_code: persistedHsn },
+                });
+                // 2. Update the M02 normalised_fields so the preview reflects it on re-open
+                setM02States(prev => {
+                  const slot    = prev[idx] || {};
+                  const result  = slot.result || {};
+                  const nf      = result.normalised_fields || {};
+                  return {
+                    ...prev,
+                    [idx]: {
+                      ...slot,
+                      result: {
+                        ...result,
+                        normalised_fields: { ...nf, hsn_code: persistedHsn },
+                      },
+                    },
+                  };
+                });
+                // 3. Persist to the database so the HSN survives page reloads and
+                //    is returned by the backend for any future lookup on this document.
+                const docId = currentPreviewFile?.documentId;
+                if (docId) {
+                  documentService.saveDocumentHSN(docId, persistedHsn).catch(err =>
+                    console.warn('[DocumentPanel] Failed to persist HSN to DB:', err)
+                  );
+                }
+              }
+            }
+            onExtractedItems(navItems, documentName);
+            closePreviewModal();
+          }
+        } : null}
       />
 
       {/* Extraction Loading Modal */}
@@ -2303,7 +1736,7 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
                               </div>
                             )}
                             <button
-                              onClick={() => { triggerM02(idx, clf?.docType || null); setActiveM02Idx(idx); }}
+                              onClick={() => triggerM02(idx, clf?.docType || null)}
                               disabled={!fileState?.documentId}
                               style={{
                                 width: '100%',
@@ -2337,24 +1770,40 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
                         )}
 
                         {/* Step 3 done — Extracted tick + type */}
-                        {extractDone && (
-                          <>
-                            <div style={{ fontSize: 11, color: '#4ade80', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-                              <Tick /> Extracted
-                            </div>
-                            {(m02Result?.document_type_display || clf?.display) && (
-                              <div style={{ fontSize: 10, color: 'var(--t-text-sub)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <span>{m02Result?.document_type_icon || clf?.icon}</span>
-                                <span>{m02Result?.document_type_display || clf?.display}</span>
-                                {m02Result?.overall_confidence != null && (
-                                  <span style={{ color: 'var(--t-text-sub)' }}>
-                                    {(m02Result.overall_confidence * 100).toFixed(0)}%
-                                  </span>
-                                )}
+                        {extractDone && (() => {
+                          const HSN_KEYS = ['hsn_code', 'hs_code', 'hscode', 'HS Code/HSN Code', 'HSN Code', 'hs_tariff_code', 'tariff_code', 'commodity_code'];
+                          const ef = m02Result?.normalised_fields || m02Result?.extracted_fields || {};
+                          let foundHsn = null;
+                          for (const k of HSN_KEYS) { if (ef[k]) { foundHsn = String(ef[k]).trim(); break; } }
+                          if (!foundHsn && Array.isArray(ef.line_items)) {
+                            outer: for (const item of ef.line_items) {
+                              for (const k of HSN_KEYS) { if (item?.[k]) { foundHsn = String(item[k]).trim(); break outer; } }
+                            }
+                          }
+                          return (
+                            <>
+                              <div style={{ fontSize: 11, color: '#4ade80', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                                <Tick /> Extracted
                               </div>
-                            )}
-                          </>
-                        )}
+                              {(m02Result?.document_type_display || clf?.display) && (
+                                <div style={{ fontSize: 10, color: 'var(--t-text-sub)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span>{m02Result?.document_type_icon || clf?.icon}</span>
+                                  <span>{m02Result?.document_type_display || clf?.display}</span>
+                                  {m02Result?.overall_confidence != null && (
+                                    <span style={{ color: 'var(--t-text-sub)' }}>
+                                      {(m02Result.overall_confidence * 100).toFixed(0)}%
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {foundHsn && (
+                                <div style={{ fontSize: 10, color: '#4ade80', marginTop: 2 }}>
+                                  🏷 HSN: {foundHsn}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         {/* Extraction error */}
                         {extractError && (
@@ -2367,7 +1816,7 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
                       {/* Re-run extraction button (only after done or error) */}
                       {(extractDone || extractError) && (
                         <button
-                          onClick={() => { triggerM02(idx, clf?.docType || null); setActiveM02Idx(idx); }}
+                          onClick={() => triggerM02(idx, clf?.docType || null)}
                           disabled={!fileState?.documentId}
                           title="Re-run extraction"
                           style={{
@@ -2378,17 +1827,6 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
                           }}
                         >
                           ↺
-                        </button>
-                      )}
-
-                      {/* View results */}
-                      {extractDone && (
-                        <button
-                          onClick={() => setActiveM02Idx(idx)}
-                          title="View extraction results"
-                          style={{ fontSize: 11, padding: '3px 7px' }}
-                        >
-                          Results
                         </button>
                       )}
 
@@ -2419,17 +1857,6 @@ const DocumentPanel = ({ onExtractedItems, pendingDocument, onClearPending }) =>
           )}
         </Sidebar>
       </AppLayout>
-
-      {/* M02 Results Panel */}
-      {activeM02Idx !== null && m02States[activeM02Idx] && (
-        <M02Panel
-          m02State={m02States[activeM02Idx]}
-          fileState={files[activeM02Idx]}
-          onClose={() => setActiveM02Idx(null)}
-          onSubmitReview={(fields) => submitM02Review(activeM02Idx, fields)}
-          onDownloadJson={() => handleSaveJson(activeM02Idx)}
-        />
-      )}
     </PanelContainer>
   );
 };

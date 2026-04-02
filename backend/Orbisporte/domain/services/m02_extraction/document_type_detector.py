@@ -34,14 +34,14 @@ DOCUMENT_TYPES: Dict[str, Dict[str, Any]] = {
         "description": "Seller's official invoice for customs valuation and duty calculation",
     },
     "packing_list": {
-        "display_name": "Packing List",
+        "display_name": "Packaging List",
         "icon": "📦",
         "color": "#8b5cf6",
-        "key_signals": ["packing list", "net weight", "gross weight", "carton", "package", "marks & numbers", "no. of packages", "dimensions"],
+        "key_signals": ["packing list", "packaging list", "net weight", "gross weight", "carton", "package", "marks & numbers", "no. of packages", "dimensions"],
         "description": "Itemized list of packages, weights and contents",
     },
     "air_waybill": {
-        "display_name": "Air Waybill (AWB)",
+        "display_name": "Airway Bill (AWB)",
         "icon": "✈️",
         "color": "#06b6d4",
         "key_signals": ["air waybill", "awb", "mawb", "hawb", "airway bill", "iata", "shipper", "consignee", "flight no", "airport of departure", "airport of destination"],

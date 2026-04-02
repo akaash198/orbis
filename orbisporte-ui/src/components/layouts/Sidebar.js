@@ -14,7 +14,7 @@ console.log('[Sidebar] VERSION 5.0 - Dropdown support added');
 const SidebarWrapper = styled.div`
   width: ${props => props.$collapsed ? '72px' : '280px'};
   transition: all ${theme.transitions.normal} cubic-bezier(0.4, 0, 0.2, 1);
-  border-right: 1px solid ${theme.colors.ui.border};
+  border-right: 1px solid rgba(59, 130, 246, 0.25);
   height: 100%;
   background: ${theme.colors.ui.sidebar};
   backdrop-filter: blur(20px);
@@ -35,8 +35,24 @@ const SidebarWrapper = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+    background:
+      radial-gradient(ellipse at 10% 15%, rgba(59, 130, 246, 0.18) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 40%, rgba(6, 182, 212, 0.14) 0%, transparent 40%),
+      radial-gradient(ellipse at 30% 75%, rgba(139, 92, 246, 0.12) 0%, transparent 45%),
+      radial-gradient(ellipse at 90% 90%, rgba(16, 185, 129, 0.10) 0%, transparent 40%);
     z-index: 0;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.6), rgba(6, 182, 212, 0.6), rgba(139, 92, 246, 0.4), transparent);
+    z-index: 1;
     pointer-events: none;
   }
 `;
@@ -73,22 +89,12 @@ const SidebarHeader = styled.div`
 
 const FloatingGlobe = styled.div`
   font-size: 48px;
-  animation: floatGlobe 3s ease-in-out infinite;
   filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
   margin-bottom: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-
-  @keyframes floatGlobe {
-    0%, 100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-      transform: translateY(-8px) rotate(180deg);
-    }
-  }
 `;
 
 const SidebarContent = styled.div`
@@ -97,6 +103,8 @@ const SidebarContent = styled.div`
   padding-bottom: ${theme.spacing.md}px;
   overflow-y: auto;
   overflow-x: hidden;
+  position: relative;
+  z-index: 2;
 
   /* Custom scrollbar for sidebar */
   &::-webkit-scrollbar {
@@ -400,7 +408,7 @@ const Sidebar = ({ active, onSelect, collapsed, setCollapsed }) => {
               <div style={{
                 fontWeight: 900,
                 letterSpacing: '0.08em',
-                fontSize: '18px',
+                fontSize: '26px',
                 textShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
                 lineHeight: '1.3',
                 background: 'linear-gradient(135deg, #3B82F6, #06B6D4)',
@@ -410,16 +418,6 @@ const Sidebar = ({ active, onSelect, collapsed, setCollapsed }) => {
                 marginBottom: '4px'
               }}>
                 ORBISPORTÉ
-              </div>
-              <div style={{
-                fontSize: '12px',
-                opacity: 0.95,
-                fontWeight: 600,
-                textShadow: '0 1px 4px rgba(0, 0, 0, 0.3)',
-                letterSpacing: '0.05em',
-                lineHeight: '1.4'
-              }}>
-                GLOBAL TRADE PLATFORM
               </div>
             </div>
           </>

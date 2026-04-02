@@ -185,13 +185,15 @@ class DocumentClassificationService:
                 raw_content = classification["raw_response"].lower()
                 # Try to identify document type from raw text
                 fallback_type = "unknown"
-                if "invoice" in raw_content:
-                    fallback_type = "invoice"
-                elif "bill of lading" in raw_content or "bol" in raw_content:
+                if "bill of lading" in raw_content or "bol" in raw_content:
                     fallback_type = "bill_of_lading"
-                elif "airwaybill" in raw_content or "awb" in raw_content:
-                    fallback_type = "airwaybill"
-                elif "packing" in raw_content:
+                elif "airway bill" in raw_content or "air waybill" in raw_content or "awb" in raw_content:
+                    fallback_type = "air_waybill"
+                elif "commercial invoice" in raw_content:
+                    fallback_type = "commercial_invoice"
+                elif "invoice" in raw_content:
+                    fallback_type = "commercial_invoice"
+                elif "packaging list" in raw_content or "packing" in raw_content:
                     fallback_type = "packing_list"
 
                 classification = {
@@ -254,23 +256,35 @@ class DocumentClassificationService:
         """Normalize classification results to standard format."""
         if not classification:
             return "unknown"
-        
+
         classification = classification.lower().strip()
-        
-        # Standard mappings
-        if "invoice" in classification:
-            return "invoice"
-        elif any(term in classification for term in ["bill of lading", "billoflading", "b/l", "bol", "bl"]):
+
+        # Standard mappings — check more specific terms before generic ones
+        if any(term in classification for term in ["bill of lading", "billoflading", "b/l no", "bol", "bill_of_lading"]):
             return "bill_of_lading"
-        elif any(term in classification for term in ["airwaybill", "air waybill", "awb", "air_waybill"]):
-            return "airwaybill"
-        elif any(term in classification for term in ["packing", "packing_list", "packinglist"]):
+        elif any(term in classification for term in ["airway bill", "air waybill", "airwaybill", "awb", "air_waybill"]):
+            return "air_waybill"
+        elif any(term in classification for term in ["proforma invoice", "pro-forma invoice", "pro forma invoice", "proforma_invoice", "pi no", "quotation"]):
+            return "proforma_invoice"
+        elif any(term in classification for term in ["commercial invoice", "commercialinvoice", "commercial_invoice"]):
+            return "commercial_invoice"
+        elif any(term in classification for term in ["packaging list", "packing list", "packing_list", "packinglist", "packaging_list"]):
             return "packing_list"
-        elif any(term in classification for term in ["arrival", "arrival_notice"]):
-            return "arrival_notice"
-        elif any(term in classification for term in ["certificate", "certificateoforigin", "origin"]):
+        elif any(term in classification for term in ["letter of credit", "documentary credit", "letter_of_credit", "lc no"]):
+            return "letter_of_credit"
+        elif any(term in classification for term in ["purchase order", "purchase_order", "p.o. no", "po number"]):
+            return "purchase_order"
+        elif any(term in classification for term in ["bill of entry", "bill_of_entry", "be no"]):
+            return "bill_of_entry"
+        elif any(term in classification for term in ["shipping bill", "shipping_bill", "sb no"]):
+            return "shipping_bill"
+        elif any(term in classification for term in ["customs declaration", "customs_declaration", "igm", "egm", "icegate"]):
+            return "customs_declaration"
+        elif any(term in classification for term in ["certificate of origin", "certificate_of_origin", "certificateoforigin", "form a", "gsp certificate"]):
             return "certificate_of_origin"
-        elif any(term in classification for term in ["commercial", "commercialinvoice"]):
+        elif any(term in classification for term in ["arrival notice", "arrival_notice"]):
+            return "arrival_notice"
+        elif "invoice" in classification:
             return "commercial_invoice"
         else:
             return "unknown"

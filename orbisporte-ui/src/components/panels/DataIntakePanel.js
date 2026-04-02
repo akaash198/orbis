@@ -283,6 +283,39 @@ const SectionTitle = styled.h3`
   border-bottom: 1px solid var(--t-border);
 `;
 
+// ── Document type display names ───────────────────────────────────────────────
+const DOC_TYPE_DISPLAY = {
+  // ── Commercial documents ────────────────────────────────────────────────
+  commercial_invoice:    'Commercial Invoice',
+  invoice:               'Commercial Invoice',
+  proforma_invoice:      'Proforma Invoice',
+  purchase_order:        'Purchase Order',
+  // ── Shipping / transport documents ─────────────────────────────────────
+  packing_list:          'Packaging List',
+  air_waybill:           'Airway Bill (AWB)',
+  airway_bill:           'Airway Bill (AWB)',
+  airwaybill:            'Airway Bill (AWB)',
+  bill_of_lading:        'Bill of Lading',
+  arrival_notice:        'Arrival Notice',
+  // ── Compliance / customs documents ─────────────────────────────────────
+  certificate_of_origin: 'Certificate of Origin',
+  letter_of_credit:      'Letter of Credit',
+  customs_declaration:   'Customs Declaration',
+  bill_of_entry:         'Bill of Entry',
+  shipping_bill:         'Shipping Bill',
+  // ── Other ──────────────────────────────────────────────────────────────
+  edi_transaction:       'EDI Transaction',
+  barcode_payload:       'Barcode Payload',
+  audio_transcript:      'Audio Transcript',
+  voice_input:           'Voice Input',
+  unknown:               'Unknown Document',
+};
+
+const formatDocType = (raw) => {
+  if (!raw) return '—';
+  return DOC_TYPE_DISPLAY[raw] || raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
+
 // ── Helper ────────────────────────────────────────────────────────────────────
 // Reads from the same key the existing api.js service uses: localStorage.authToken
 const authHeader = () => {
@@ -463,7 +496,7 @@ function PipelineProgress({ documentId, initialData, onPageChange }) {
         <ResultBox style={{ marginTop: 10 }}>
           {[
             ['document id',   <code key="id" style={{ fontSize: '0.76rem', color: 'var(--t-btn-color)' }}>{data.document_id}</code>],
-            ['document type', data.document_type || '—'],
+            ['document type', formatDocType(data.document_type)],
             ['language',      data.language || '—'],
             ['tier',          <span key="tier" style={{ color: '#34D399' }}>{data.current_tier}</span>],
             ['duplicate',     data.is_duplicate ? `yes (of ${data.duplicate_of})` : 'no'],
@@ -765,12 +798,15 @@ function DocumentViewModal({ doc, data, loading, onClose }) {
               ['Status',         <StatusBadge status={data.ingestion_status}>{data.ingestion_status}</StatusBadge>],
               ['Source Channel', data.source_channel || '—'],
               ['File Type',      data.file_type || '—'],
-              ['Document Type',  data.document_type || '—'],
+              ['Document Type',  formatDocType(data.document_type)],
               ['Language',       data.language || '—'],
               ['Current Tier',   <span style={{ color: '#34D399' }}>{data.current_tier || '—'}</span>],
               ['Duplicate',      data.is_duplicate
-                ? <span style={{ color: '#FCD34D' }}>Yes — of {data.duplicate_of?.slice(0,20)}…</span>
-                : 'No'],
+                ? <span style={{ color: '#F59E0B', fontWeight: 600 }}>
+                    ⚠ YES{data.duplicate_confidence != null ? ` (${(data.duplicate_confidence * 100).toFixed(1)}% match)` : ''}
+                    {data.duplicate_of && <><br/><code style={{ fontSize: '0.72rem', wordBreak: 'break-all' }}>{data.duplicate_of}</code></>}
+                  </span>
+                : <span style={{ color: '#34D399' }}>No</span>],
               ['Raw Lake Path',  data.raw_lake_path
                 ? <code style={{ fontSize: '0.72rem', color: '#2563eb', wordBreak: 'break-all' }}>{data.raw_lake_path}</code>
                 : '—'],
@@ -836,16 +872,19 @@ const ModalBox = styled.div`
   animation: ${fadeIn} 0.2s ease;
 `;
 
-function DeleteConfirmModal({ doc, onConfirm, onCancel, deleting }) {
+function DeleteConfirmModal({ doc, onConfirm, onCancel, deleting, error }) {
   return (
-    <ModalOverlay onClick={onCancel}>
+    <ModalOverlay onClick={deleting ? undefined : onCancel}>
       <ModalBox onClick={e => e.stopPropagation()}>
         <div style={{ fontSize: '1.5rem', marginBottom: 12 }}>🗑️</div>
         <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--t-text)', marginBottom: 8 }}>
-          Delete Document?
+          {doc.is_duplicate ? 'Delete Duplicate Document?' : 'Delete Document?'}
         </div>
         <div style={{ fontSize: '0.85rem', color: 'var(--t-text-sub)', marginBottom: 6 }}>
-          This will permanently remove the document and all its data lake objects.
+          {doc.is_duplicate
+            ? 'This will permanently remove the duplicate and all its data from the registry, data lake, and dedup index. The original document is not affected.'
+            : 'This will permanently remove the document and all its data lake objects.'
+          }{' '}
           This action cannot be undone.
         </div>
         <ResultBox style={{ margin: '14px 0' }}>
@@ -858,16 +897,37 @@ function DeleteConfirmModal({ doc, onConfirm, onCancel, deleting }) {
             <Value>{doc.original_filename || '—'}</Value>
           </Field>
           {doc.is_duplicate && (
-            <Field>
-              <Label>duplicate of</Label>
-              <Value style={{ color: '#FCD34D', fontSize: '0.78rem' }}>{doc.duplicate_of?.slice(0,20)}…</Value>
-            </Field>
+            <>
+              <Field>
+                <Label>duplicate of</Label>
+                <Value style={{ color: '#F59E0B', fontSize: '0.75rem', wordBreak: 'break-all' }}>
+                  <code>{doc.duplicate_of || '—'}</code>
+                </Value>
+              </Field>
+              {doc.duplicate_confidence != null && (
+                <Field>
+                  <Label>match confidence</Label>
+                  <Value style={{ color: '#F59E0B' }}>
+                    {(doc.duplicate_confidence * 100).toFixed(1)}%
+                  </Value>
+                </Field>
+              )}
+            </>
           )}
         </ResultBox>
+        {error && (
+          <div style={{
+            margin: '0 0 14px 0', padding: '10px 14px',
+            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)',
+            borderRadius: 8, color: '#F87171', fontSize: '0.82rem', lineHeight: 1.4,
+          }}>
+            <strong>Error:</strong> {error}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <Btn variant="secondary" onClick={onCancel} disabled={deleting}>Cancel</Btn>
           <Btn onClick={onConfirm} disabled={deleting}
-               style={{ background: 'linear-gradient(135deg,#ef4444,#b91c1c)' }}>
+               style={{ background: 'linear-gradient(135deg,#ef4444,#b91c1c)', minWidth: 140 }}>
             {deleting ? <><Spinner />Deleting…</> : 'Delete permanently'}
           </Btn>
         </div>
@@ -881,10 +941,11 @@ function RegistryViewer() {
   const [data,       setData]       = useState(null);
   const [loading,    setLoading]    = useState(false);
   const [filter,     setFilter]     = useState({ channel: '', status: '' });
-  const [toDelete,   setToDelete]   = useState(null);   // row selected for deletion
-  const [deleting,   setDeleting]   = useState(false);
-  const [deleteError,setDeleteError] = useState(null);
-  const [toView,     setToView]     = useState(null);   // row selected for viewing
+  const [toDelete,     setToDelete]     = useState(null);   // row selected for deletion
+  const [deleting,     setDeleting]     = useState(false);
+  const [deleteError,  setDeleteError]  = useState(null);
+  const [deleteSuccess,setDeleteSuccess] = useState(null); // success message
+  const [toView,       setToView]       = useState(null);   // row selected for viewing
   const [viewData,   setViewData]   = useState(null);
   const [viewLoading,setViewLoading] = useState(false);
 
@@ -892,8 +953,9 @@ function RegistryViewer() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: 1, page_size: 25 });
-      if (filter.channel) params.append('source_channel', filter.channel);
-      if (filter.status)  params.append('ingestion_status', filter.status);
+      if (filter.channel)    params.append('source_channel', filter.channel);
+      if (filter.status)     params.append('ingestion_status', filter.status);
+      if (filter.duplicates === 'duplicates') params.append('is_duplicate', 'true');
       const { data: d } = await axios.get(`${API_BASE}/intake/registry?${params}`,
         { headers: authHeader() });
       setData(d);
@@ -922,10 +984,18 @@ function RegistryViewer() {
   const confirmDelete = async () => {
     if (!toDelete) return;
     setDeleting(true); setDeleteError(null);
+    const docName = toDelete.original_filename || toDelete.document_id?.slice(0, 16) + '…';
+    const wasDuplicate = toDelete.is_duplicate;
     try {
       await axios.delete(`${API_BASE}/intake/document/${toDelete.document_id}`,
         { headers: authHeader() });
       setToDelete(null);
+      setDeleteSuccess(
+        wasDuplicate
+          ? `Duplicate "${docName}" deleted — removed from registry, data lake and dedup index.`
+          : `Document "${docName}" permanently deleted.`
+      );
+      setTimeout(() => setDeleteSuccess(null), 5000);
       await load();   // refresh registry
     } catch (e) {
       const detail = e.response?.data?.detail;
@@ -952,16 +1022,20 @@ function RegistryViewer() {
           onConfirm={confirmDelete}
           onCancel={() => { setToDelete(null); setDeleteError(null); }}
           deleting={deleting}
+          error={deleteError}
         />
       )}
 
       <SectionTitle>Document Registry</SectionTitle>
 
-      {deleteError && (
-        <div style={{ color: '#F87171', fontSize: '0.85rem', marginBottom: 12,
-                      padding: '10px 14px', background: 'rgba(239,68,68,0.08)',
-                      borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>
-          {deleteError}
+      {deleteSuccess && (
+        <div style={{
+          color: '#34D399', fontSize: '0.85rem', marginBottom: 12,
+          padding: '10px 14px', background: 'rgba(52,211,153,0.08)',
+          borderRadius: 8, border: '1px solid rgba(52,211,153,0.25)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ fontSize: '1rem' }}>✓</span> {deleteSuccess}
         </div>
       )}
 
@@ -1016,30 +1090,54 @@ function RegistryViewer() {
           )}
           {data.items?.map(row => (
             <TableRow key={row.document_id}
-                      style={row.is_duplicate ? { background: 'rgba(239,68,68,0.03)' } : {}}>
+                      style={row.is_duplicate ? {
+                        background: 'rgba(245,158,11,0.05)',
+                        borderLeft: '3px solid rgba(245,158,11,0.5)',
+                      } : { borderLeft: '3px solid transparent' }}>
               <div title={row.document_id}>
                 <code style={{ fontSize: '0.75rem', color: 'var(--t-btn-color)' }}>
                   {row.document_id?.slice(0, 16)}…
                 </code>
                 {row.is_duplicate && (
-                  <span style={{ marginLeft: 6, fontSize: '0.68rem', color: '#FCD34D',
-                                 background: 'rgba(252,211,77,0.1)', padding: '1px 6px',
-                                 borderRadius: 4, border: '1px solid rgba(252,211,77,0.2)' }}>
-                    duplicate
+                  <span
+                    title={[
+                      'DUPLICATE DOCUMENT',
+                      row.duplicate_of ? `Original: ${row.duplicate_of}` : '',
+                      row.duplicate_confidence ? `Match confidence: ${(row.duplicate_confidence * 100).toFixed(1)}%` : '',
+                      'This file is semantically identical to an existing document.',
+                    ].filter(Boolean).join('\n')}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 3,
+                      marginLeft: 6, fontSize: '0.68rem', fontWeight: 700,
+                      color: '#F59E0B',
+                      background: 'rgba(245,158,11,0.15)',
+                      padding: '2px 7px', borderRadius: 4,
+                      border: '1px solid rgba(245,158,11,0.4)',
+                      cursor: 'default', letterSpacing: '0.03em',
+                    }}>
+                    ⚠ DUPLICATE
                   </span>
                 )}
               </div>
               <div style={{ color: '#2563eb' }}>{row.source_channel}</div>
               <div>{row.file_type || '—'}</div>
               <div style={{ color: 'var(--t-text-sub)', fontSize: '0.78rem' }}>
-                {row.document_type || '—'}
+                {formatDocType(row.document_type)}
               </div>
               <div><StatusBadge status={row.ingestion_status}>{row.ingestion_status}</StatusBadge></div>
               <div style={{ color: '#34D399', fontSize: '0.8rem' }}>{row.current_tier}</div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <ViewBtn onClick={() => openView(row)}>View</ViewBtn>
-                <DeleteBtn onClick={() => { setDeleteError(null); setToDelete(row); }}>
-                  Delete
+                <DeleteBtn
+                  onClick={() => { setDeleteError(null); setToDelete(row); }}
+                  style={row.is_duplicate ? {
+                    background: 'rgba(239,68,68,0.18)',
+                    borderColor: 'rgba(239,68,68,0.55)',
+                    fontWeight: 700,
+                  } : {}}
+                  title={row.is_duplicate ? 'Delete this duplicate — removes it permanently from the registry and data lake' : 'Delete document permanently'}
+                >
+                  {row.is_duplicate ? 'Delete Duplicate' : 'Delete'}
                 </DeleteBtn>
               </div>
             </TableRow>

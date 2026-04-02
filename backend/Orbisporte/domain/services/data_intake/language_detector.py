@@ -13,18 +13,18 @@ Document type detection
 
   Supported types
   ---------------
-    invoice           – Commercial invoices
-    bill_of_entry     – Indian customs BoE (BE)
-    shipping_bill     – Export shipping bills
-    packing_list      – Packing / weight lists
+    commercial_invoice    – Commercial invoices
+    bill_of_entry         – Indian customs BoE (BE)
+    shipping_bill         – Export shipping bills
+    packing_list          – Packing / packaging lists
     certificate_of_origin – CoO documents
-    airway_bill       – Air waybills (AWB)
-    bill_of_lading    – Ocean bills of lading (BL/BoL)
-    purchase_order    – POs from buyers
-    edi_transaction   – EDI X12/EDIFACT messages
-    barcode_payload   – Decoded barcode / QR data
-    audio_transcript  – Speech-to-text output
-    unknown           – Could not classify
+    air_waybill           – Air waybills (AWB)
+    bill_of_lading        – Ocean bills of lading (BL/BoL)
+    purchase_order        – POs from buyers
+    edi_transaction       – EDI X12/EDIFACT messages
+    barcode_payload       – Decoded barcode / QR data
+    audio_transcript      – Speech-to-text output
+    unknown               – Could not classify
 """
 
 import logging
@@ -42,20 +42,55 @@ except ImportError:
     logger.warning("langdetect not installed — language detection will return 'unknown'.")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Keyword sets for document-type heuristics
-# Each entry: (doc_type_key, required_keywords[], optional_boost_keywords[], weight)
+# Keyword sets for document-type heuristics.
+#
+# Each entry: (doc_type_key, required_keywords[], optional_boost_keywords[], weight, min_hits)
+#
+# IMPORTANT: Keep keywords EXCLUSIVE to each document type.
+# "country of origin" is a standard field on commercial invoices — do NOT put it
+# in certificate_of_origin or it will misclassify every invoice.
 _DOC_RULES = [
-    ("bill_of_entry",      ["bill of entry", "be number", "import general manifest", "icegate", "customs duty"],     ["importer", "port of entry", "iec"], 1.5),
-    ("shipping_bill",      ["shipping bill", "sb number", "let export", "export general manifest", "are-1"],         ["exporter", "port of loading"], 1.5),
-    ("invoice",            ["invoice", "invoice number", "inv no", "bill to", "sold to", "unit price", "total amount"], ["vat", "gst", "hsn", "amount due"], 1.0),
-    ("packing_list",       ["packing list", "net weight", "gross weight", "carton", "marks and numbers"],            ["package", "dimensions"], 1.0),
-    ("certificate_of_origin", ["certificate of origin", "country of origin", "chamber of commerce"],                ["fta", "preferential"], 1.2),
-    ("airway_bill",        ["air waybill", "awb", "airway bill", "iata", "airport of destination"],                  ["flight", "cargo"], 1.0),
-    ("bill_of_lading",     ["bill of lading", "b/l", "vessel", "port of discharge", "shipper", "consignee"],         ["ocean", "container", "freight"], 1.0),
-    ("purchase_order",     ["purchase order", "po number", "p.o.", "ordered by", "delivery date"],                   ["buyer", "supplier", "quantity"], 1.0),
-    ("edi_transaction",    ["isa*", "una:", "st*", "gs*", "ge*", "iea*", "edifact"],                                 [], 2.0),
-    ("barcode_payload",    ["gs1", "sscc", "gtin", "barcode", "qr code"],                                            [], 1.5),
-    ("audio_transcript",   ["[speaker", "[pause", "[inaudible", "transcript", "spoken by"],                          [], 1.2),
+    # Indian customs declarations — very specific terms, high weight
+    ("bill_of_entry",         ["bill of entry", "be number", "import general manifest", "icegate", "customs duty"],
+                               ["importer", "port of entry", "iec"], 1.5, 2),
+    ("shipping_bill",         ["shipping bill", "sb number", "let export", "export general manifest", "are-1"],
+                               ["exporter", "port of loading"], 1.5, 2),
+
+    # Transport documents — specific enough with 2 hits
+    ("air_waybill",           ["air waybill", "airway bill", "awb no", "mawb no", "hawb no", "iata", "airport of destination", "airport of departure"],
+                               ["flight no", "cargo"], 1.2, 2),
+    ("bill_of_lading",        ["bill of lading", "b/l no", "bl no", "hbl", "mbl", "port of discharge", "vessel name", "voyage no"],
+                               ["ocean freight", "container no", "notify party"], 1.2, 2),
+
+    # Commercial invoice — broad signals, require 3+ hits to beat CoO false positive
+    ("commercial_invoice",    ["commercial invoice", "invoice no", "invoice number", "inv no",
+                                "bill to", "ship to", "sold to", "unit price", "total amount",
+                                "invoice date", "seller", "buyer", "description of goods",
+                                "amount due", "payment terms", "terms of payment"],
+                               ["vat", "gst", "hsn", "igst", "tax invoice"], 1.0, 2),
+
+    # Packing list — weight/carton signals
+    ("packing_list",          ["packing list", "packaging list", "net weight", "gross weight",
+                                "no. of cartons", "no. of packages", "marks and numbers", "dimensions"],
+                               ["package", "pallets"], 1.0, 2),
+
+    # Certificate of Origin — MUST have the phrase "certificate of origin" itself;
+    # "country of origin" alone is NOT enough (it's a field on every invoice)
+    ("certificate_of_origin", ["certificate of origin", "certifying authority", "authorized signatory",
+                                "form a", "gsp form", "preferential tariff", "chamber of commerce"],
+                               ["fta", "preferential", "rules of origin"], 1.0, 2),
+
+    # Purchase order
+    ("purchase_order",        ["purchase order", "po number", "p.o. number", "ordered by", "delivery date", "order date"],
+                               ["buyer", "vendor", "supplier", "quantity"], 1.0, 2),
+
+    # Structured data formats — single strong signal is fine
+    ("edi_transaction",       ["isa*", "una:", "st*", "gs*", "ge*", "iea*", "edifact"],
+                               [], 2.0, 1),
+    ("barcode_payload",       ["gs1", "sscc", "gtin", "barcode", "qr code"],
+                               [], 1.5, 1),
+    ("audio_transcript",      ["[speaker", "[pause", "[inaudible", "transcript", "spoken by"],
+                               [], 1.2, 1),
 ]
 
 
@@ -123,10 +158,11 @@ def classify_document_type(text: str) -> Tuple[str, float]:
     text_lower = text.lower()
     scores: dict = {}
 
-    for doc_type, required_kws, boost_kws, weight in _DOC_RULES:
+    for doc_type, required_kws, boost_kws, weight, min_hits in _DOC_RULES:
         # Count required keywords present
         req_hits = sum(1 for kw in required_kws if kw in text_lower)
-        if req_hits == 0:
+        # Must meet the per-type minimum hit threshold — prevents single-keyword misclassification
+        if req_hits < min_hits:
             continue
         req_ratio = req_hits / len(required_kws)
 

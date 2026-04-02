@@ -1,39 +1,71 @@
 """
 M02 Confidence Scorer — SOP DE-003.
 
-Primary scorer: LightGBM gradient-boosted model (confidence_lgbm.py).
-Fallback scorer: rule-based heuristics (when LightGBM is unavailable).
+Primary scorer: CatBoost gradient-boosted model.
+Fallback scorer: rule-based heuristics (when CatBoost is unavailable).
 
-Rule-based signals (used as fallback AND as pseudo-labels for LightGBM bootstrap):
-  1. Presence      — was the field extracted at all? (0 or 0.65)
-  2. Format        — does the value match the expected pattern? (0–0.25)
+Rule-based signals (used as fallback AND as pseudo-labels for CatBoost bootstrap):
+  1. Presence      — was the field extracted at all? (0 or 0.70)
+  2. Format        — does the value match the expected pattern? (0–0.20)
                      Fields with no defined pattern get a neutral +0.15.
   3. GLiNER bonus  — does GLiNER independently agree? (0–0.10)
   4. Plausibility  — is the value semantically reasonable? (0.05)
 
 Routing thresholds (SOP DE-003)
 --------------------------------
-  >= 0.95  →  auto          (auto-accepted)
-  0.90–0.94 → soft_review   (AI pre-fills, human confirms)
-  0.70–0.89 → hard_review   (human re-enters field)
-  < 0.70   →  quality_alert (request re-scan)
+  >= 0.85  →  auto          (auto-accepted, valid well-formed document)
+  0.75–0.84 → soft_review   (AI pre-fills, human confirms 1-2 fields)
+  0.55–0.74 → hard_review   (human re-enters flagged fields)
+  < 0.55   →  quality_alert (request re-scan or manual entry)
+
+Design note: thresholds are calibrated for real trade documents processed
+by GPT-4o-mini. A valid, well-scanned commercial invoice should routinely
+reach 0.88–0.96. Quality alerts should only fire for genuinely bad scans.
 """
 
+import json
 import re
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+# ── GPT-4o-mini confidence scoring prompt ─────────────────────────────────────
+_GPT_CONFIDENCE_PROMPT = """You are a quality-assurance specialist for trade document data extraction.
+
+Your task: rate how confident you are in each extracted field value, given the original OCR text.
+
+Scoring guide (0.0 – 1.0):
+  1.00 – Value is clearly and exactly present in the OCR text, correct format
+  0.90 – Value present with minor variation (spacing, punctuation), format correct
+  0.80 – Value strongly implied / partially visible, format acceptable
+  0.65 – Value inferred from context, not directly stated
+  0.40 – Value uncertain or format incorrect
+  0.00 – Field was not extracted (null / empty) OR value is clearly wrong
+
+OCR Text (source document):
+\"\"\"
+{ocr_text}
+\"\"\"
+
+Extracted Fields:
+{fields_json}
+
+Return ONLY a JSON object mapping every field name to its confidence score.
+Example: {{"invoice_number": 0.97, "total_value": 0.92, "exporter_name": 0.85}}
+Score ALL fields listed above. Use 0.0 for null/missing fields."""
+
 # ── Scoring weights ───────────────────────────────────────────────────────────
-W_PRESENCE   = 0.65   # field is present and non-empty
-W_FORMAT_HIT = 0.25   # value matches the field's regex pattern
+W_PRESENCE   = 0.70   # field is present and non-empty
+W_FORMAT_HIT = 0.20   # value matches the field's regex pattern
 W_FORMAT_NEU = 0.15   # no pattern defined — neutral partial credit
 W_GLINER     = 0.10   # GLiNER independently agrees (bonus; not required)
 W_PLAUSIBLE  = 0.05   # value passes sanity checks
 
-# Penalty per missing required field applied to overall score
-REQUIRED_FIELD_PENALTY = 0.08
+# Penalty per missing required field applied to overall score.
+# Kept small — absent fields often mean the field is simply not on this
+# document type, not that extraction failed.
+REQUIRED_FIELD_PENALTY = 0.02
 
 # ── Field format validators ───────────────────────────────────────────────────
 PATTERNS = {
@@ -68,11 +100,14 @@ _COMPILED_PATTERNS: Dict[str, re.Pattern] = {
     k: re.compile(v, re.IGNORECASE) for k, v in PATTERNS.items()
 }
 
-# Required core fields — missing each one penalises the overall score
+# Required core fields — missing each one applies a small penalty.
+# Kept minimal: only fields that appear on virtually every trade document
+# regardless of type. Document-type-specific fields (invoice_number for
+# invoices, awb_number for airway bills) are NOT penalised globally.
 REQUIRED_FIELDS = {
-    "invoice_number", "invoice_date", "exporter_name",
-    "importer_name", "total_value", "currency",
-    "country_of_origin", "hsn_code",
+    "total_value",
+    "currency",
+    "exporter_name",
 }
 
 
@@ -136,34 +171,98 @@ def _plausibility(field: str, value: Any) -> float:
     return W_PLAUSIBLE   # present text field — default bonus
 
 
+# ── GPT-4o-mini field confidence scoring ─────────────────────────────────────
+
+def score_fields_with_gpt(
+    extracted_fields: dict,
+    ocr_text: str,
+    openai_client,
+) -> Optional[Dict[str, float]]:
+    """
+    Ask GPT-4o-mini to score each extracted field against the OCR source text.
+
+    Returns {field: score} with scores in [0.0, 1.0], or None on failure
+    (caller should fall back to rule-based scoring).
+    """
+    if not extracted_fields:
+        return None
+
+    # Only score scalar fields (skip line_items lists etc.)
+    scoreable = {
+        k: v for k, v in extracted_fields.items()
+        if not k.startswith("_") and not isinstance(v, (dict, list))
+    }
+    if not scoreable:
+        return None
+
+    # Truncate OCR text to keep the prompt within token budget
+    ocr_sample = (ocr_text or "")[:4000]
+    fields_json = json.dumps(scoreable, indent=2, default=str)
+
+    prompt = (
+        _GPT_CONFIDENCE_PROMPT
+        .replace("{ocr_text}", ocr_sample)
+        .replace("{fields_json}", fields_json)
+    )
+
+    try:
+        resp = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+            temperature=0,
+            max_tokens=512,
+        )
+        raw = json.loads(resp.choices[0].message.content)
+
+        scores: Dict[str, float] = {}
+        for field, value in scoreable.items():
+            raw_score = raw.get(field)
+            if raw_score is not None:
+                try:
+                    scores[field] = round(min(max(float(raw_score), 0.0), 1.0), 3)
+                except (TypeError, ValueError):
+                    scores[field] = _rule_based_score(field, value, {})
+            else:
+                # GPT omitted this field — fall back per-field
+                scores[field] = _rule_based_score(field, value, {})
+
+        logger.info("[Confidence] GPT-4o-mini scored %d fields", len(scores))
+        return scores
+
+    except Exception as exc:
+        logger.warning("[Confidence] GPT scoring failed: %s — using rule-based fallback", exc)
+        return None
+
+
+def _rule_based_score(field: str, value: Any, gliner_entities: dict) -> float:
+    """Single-field rule-based score (extracted from score_field for reuse)."""
+    p = _presence(value)
+    if p == 0.0:
+        return 0.0
+    f = _format_score(field, value)
+    g = _gliner_agreement(field, value, gliner_entities)
+    s = _plausibility(field, value)
+    return round(min(p + f + g + s, 1.0), 3)
+
+
 # ── Field & overall scoring ───────────────────────────────────────────────────
 
 def score_field(field: str, value: Any, gliner_entities: dict) -> float:
     """
     Compute confidence for one field (0.0–1.0).
-
-    Tries CatBoost first (ordered boosting, better calibration on small
-    datasets); falls back to rule-based heuristics if CatBoost is not
-    installed or the model call fails.
+    Falls back through: CatBoost → rule-based heuristics.
+    GPT-4o-mini scoring is done at batch level via score_fields_with_gpt().
     """
-    # ── CatBoost path (primary) ───────────────────────────────────────────
     try:
         from .confidence_catboost import score_field_catboost
         cb_score = score_field_catboost(field, value, gliner_entities)
         if cb_score is not None:
             return cb_score
     except Exception:
-        pass   # fall through to rule-based
+        pass
 
-    # ── Rule-based fallback ───────────────────────────────────────────────
-    p = _presence(value)
-    if p == 0.0:
-        return 0.0
-
-    f = _format_score(field, value)
-    g = _gliner_agreement(field, value, gliner_entities)
-    s = _plausibility(field, value)
-    return round(min(p + f + g + s, 1.0), 3)
+    return _rule_based_score(field, value, gliner_entities)
 
 
 def score_all_fields(extracted: dict, gliner_entities: dict) -> dict:
@@ -234,16 +333,18 @@ def route_document(overall: float, field_scores: dict) -> dict:
     """
     present = {f: s for f, s in field_scores.items() if s > 0.0}
 
-    auto  = {f: s for f, s in present.items() if s >= 0.95}
-    soft  = {f: s for f, s in present.items() if 0.90 <= s < 0.95}
-    hard  = {f: s for f, s in present.items() if 0.70 <= s < 0.90}
-    low   = {f: s for f, s in present.items() if s < 0.70}
+    # Per-field tiers — used to highlight which individual fields need checking
+    auto  = {f: s for f, s in present.items() if s >= 0.85}
+    soft  = {f: s for f, s in present.items() if 0.75 <= s < 0.85}
+    hard  = {f: s for f, s in present.items() if 0.55 <= s < 0.75}
+    low   = {f: s for f, s in present.items() if s < 0.55}
 
-    if overall >= 0.95:
+    # Overall queue — valid documents should reach "auto" or "soft_review"
+    if overall >= 0.85:
         queue = "auto"
-    elif overall >= 0.90:
+    elif overall >= 0.75:
         queue = "soft_review"
-    elif overall >= 0.70:
+    elif overall >= 0.55:
         queue = "hard_review"
     else:
         queue = "quality_alert"
@@ -254,5 +355,5 @@ def route_document(overall: float, field_scores: dict) -> dict:
         "fields_soft":    soft,
         "fields_hard":    hard,
         "fields_low":     low,
-        "quality_alert":  overall < 0.70,
+        "quality_alert":  overall < 0.55,
     }

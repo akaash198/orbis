@@ -1,0 +1,26 @@
+{
+  "document_id": "6cbe57d6-8292-471a-b26f-aaa9ab721144",
+  "document_type": "commercial_invoice",
+  "language": "unknown",
+  "source_channel": "portal",
+  "original_filename": "02.Inv_PL_BL.pdf",
+  "file_type": "pdf",
+  "content_hash": "674cdb6fd88895e0e8fe5d9009afc266f01d48ba5329038db86748c376ed1f1e",
+  "text_sample": "",
+  "metadata_tags": {
+    "document_id": "6cbe57d6-8292-471a-b26f-aaa9ab721144",
+    "document_type": "commercial_invoice",
+    "language": "unknown",
+    "source_system": "PORTAL v1",
+    "source_channel": "portal",
+    "original_filename": "02.Inv_PL_BL.pdf",
+    "file_type": "pdf",
+    "file_size_bytes": 706415,
+    "content_hash": "674cdb6fd88895e0e8fe5d9009afc266f01d48ba5329038db86748c376ed1f1e",
+    "timestamp": "2026-04-02T11:41:48.120742",
+    "sender_info": "test@orbisporte.com"
+  },
+  "is_duplicate": false,
+  "duplicate_of": null,
+  "ingested_at": "2026-04-02T11:41:48.161691"
+}

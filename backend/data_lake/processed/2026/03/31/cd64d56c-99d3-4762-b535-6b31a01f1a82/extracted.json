@@ -1,0 +1,26 @@
+{
+  "document_id": "cd64d56c-99d3-4762-b535-6b31a01f1a82",
+  "document_type": "commercial_invoice",
+  "language": "en",
+  "source_channel": "portal",
+  "original_filename": "Commercial Invoice_123527919.pdf",
+  "file_type": "pdf",
+  "content_hash": "d92b6b1a817bed7e5e2d26308766d7b284f4c97a3c7a94af32cf3f921d770d65",
+  "text_sample": "Commercial Invoice\nPage 1 of 2\nShip Date\nCustomer Number\n04-MAR-24\n6786\nPurchase Order Number\n  \n  Customer Reference    \n4511791632\nNo Reference\nSales Order Number\nTrip Number \n3994060\nShip Method             \n Delivery Name\nEXEL-LOCAL-AP\n 123527919\nInco Terms\nDelivery Number/Inv. Number\nFCA Port of Export\n123527919\nÌ123527919@Î \nSelling Entity:\nAvago Technologies International \nSales Pte. Limited\nCompany No. 200512231E\n1 Yishun Avenue 7\nSingapore 768923\nSingapore\nShip \nFrom\n:\nAvago Technologie",
+  "metadata_tags": {
+    "document_id": "cd64d56c-99d3-4762-b535-6b31a01f1a82",
+    "document_type": "commercial_invoice",
+    "language": "en",
+    "source_system": "PORTAL v1",
+    "source_channel": "portal",
+    "original_filename": "Commercial Invoice_123527919.pdf",
+    "file_type": "pdf",
+    "file_size_bytes": 131304,
+    "content_hash": "d92b6b1a817bed7e5e2d26308766d7b284f4c97a3c7a94af32cf3f921d770d65",
+    "timestamp": "2026-03-31T04:08:59.528267",
+    "sender_info": "test@orbisporte.com"
+  },
+  "is_duplicate": false,
+  "duplicate_of": null,
+  "ingested_at": "2026-03-31T04:08:59.557341"
+}

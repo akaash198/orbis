@@ -1,0 +1,26 @@
+{
+  "document_id": "9320d909-ad83-45bc-b9a8-0caba4e583ff",
+  "document_type": "packing_list",
+  "language": "en",
+  "source_channel": "portal",
+  "original_filename": "3.PLt2-DecMak.pdf",
+  "file_type": "pdf",
+  "content_hash": "7b1e333d7ba7db590ee6a48632090f526d0fc2e86bb03aeafb0ffea0912b2174",
+  "text_sample": "PACKAGE\nUnit\nQty\nP/N\nDescription\nNo.\nPACKING LIST\n1/1\nPage:\nIMO No.:\n2023-09-01\nDate:\nVessel:\nS23080475\nOur No.:\nNCSSG PO-231609\nYour Ref:\nDeckMac Marine Pte Ltd\nSupplier:\nNCS SG PTE. LTD\nCustomer:\nTYPE:HATCH COVER\nDeckMac Marine Pte Ltd\n1100 Lower Delta Road #02-05-06\nEPL Building Singapore 169206\nTel:+65 62599091\nPCS\n4\nFlow divider\n1\nSET\n6\nControl valve seal kit complete\n2\nPCS\n4\nControl valve block counter balance valve\n3\nPCS\n4\nControl valve block pressure reducing valve\n4\nWEIGHT (KG)\nDIMENSIO",
+  "metadata_tags": {
+    "document_id": "9320d909-ad83-45bc-b9a8-0caba4e583ff",
+    "document_type": "packing_list",
+    "language": "en",
+    "source_system": "PORTAL v1",
+    "source_channel": "portal",
+    "original_filename": "3.PLt2-DecMak.pdf",
+    "file_type": "pdf",
+    "file_size_bytes": 139728,
+    "content_hash": "7b1e333d7ba7db590ee6a48632090f526d0fc2e86bb03aeafb0ffea0912b2174",
+    "timestamp": "2026-03-30T06:44:35.590513",
+    "sender_info": "test@orbisporte.com"
+  },
+  "is_duplicate": true,
+  "duplicate_of": "a7024e03-ccd1-400d-8c89-633e6444e407",
+  "ingested_at": "2026-03-30T06:44:35.623825"
+}

@@ -16,15 +16,38 @@ const HeaderContainer = styled.div`
   right: 0;
   height: 70px;
   padding: 0 ${theme.spacing.xxl}px;
-  background: linear-gradient(90deg, #0f2569 0%, #1a3fa0 60%, #1a4fd8 100%);
+  background: linear-gradient(160deg, #04060f 0%, #060d1f 50%, #050b18 100%);
   backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.10);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.25);
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: ${theme.zIndex.navbar};
-  box-shadow: 0 2px 16px rgba(15,37,105,0.30);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
   transition: all ${theme.transitions.normal};
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 0% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 0%, rgba(6, 182, 212, 0.10) 0%, transparent 50%),
+      radial-gradient(ellipse at 100% 50%, rgba(139, 92, 246, 0.10) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.6), rgba(6, 182, 212, 0.6), rgba(139, 92, 246, 0.4), transparent);
+    pointer-events: none;
+  }
 `;
 
 const ContentWrapper = styled.div`
@@ -32,6 +55,8 @@ const ContentWrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  position: relative;
+  z-index: 2;
 `;
 
 const LeftSection = styled.div`
@@ -65,9 +90,10 @@ const Title = styled.h1`
 `;
 
 const Subtitle = styled.div`
-  color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
   font-size: ${theme.typography.fontSize.sm};
   font-weight: ${theme.typography.fontWeight.medium};
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 `;
 
 const HeaderActions = styled.div`

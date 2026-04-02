@@ -68,12 +68,12 @@ export const theme = {
       active:     'rgba(59,130,246,0.15)',
       activeDark: 'rgba(59,130,246,0.25)',
 
-      // Sidebar — deep royal blue (always dark — brand identity)
-      sidebar:       'linear-gradient(180deg, #0f2569 0%, #1a3fa0 60%, #1a4fd8 100%)',
-      sidebarSolid:  '#0f2569',
-      sidebarDark:   '#0a1a50',
-      sidebarHover:  'rgba(255,255,255,0.10)',
-      sidebarActive: 'rgba(255,255,255,0.18)',
+      // Sidebar — deep space aurora (always dark — brand identity)
+      sidebar:       'linear-gradient(160deg, #04060f 0%, #060d1f 30%, #080e22 60%, #050b18 100%)',
+      sidebarSolid:  '#04060f',
+      sidebarDark:   '#020408',
+      sidebarHover:  'rgba(59,130,246,0.12)',
+      sidebarActive: 'rgba(59,130,246,0.22)',
       sidebarGlow:   'radial-gradient(circle at 20% 20%, rgba(59,130,246,0.2) 0%, transparent 70%)',
 
       // Glass
@@ -96,7 +96,7 @@ export const theme = {
 
       // Sidebar text — white on deep blue (always)
       sidebarPrimary:   '#ffffff',
-      sidebarSecondary: 'rgba(255,255,255,0.72)',
+      sidebarSecondary: 'rgba(255,255,255,0.88)',
       sidebarActive:    '#ffffff',
     },
 

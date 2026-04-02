@@ -23,6 +23,7 @@ import {
   invoiceDutyService,
   hsCodeService,
 } from '../../services/api';
+import { useDocumentContext } from '../../contexts/DocumentContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
@@ -165,6 +166,15 @@ const Select = styled.select`
   font-size: ${theme.typography.fontSize.sm}px;
   transition: all ${theme.transitions.fast};
   &:focus { outline: none; border-color: ${theme.colors.primary.main}; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+  option {
+    background: #1a2035;
+    color: #ffffff;
+  }
+  [data-theme="light"] & option {
+    background: #ffffff;
+    color: #0f172a;
+  }
 `;
 
 const Button = styled.button`
@@ -184,7 +194,7 @@ const Button = styled.button`
 
 const SmallButton = styled.button`
   background: ${props => props.$variant === 'success' ? 'rgba(16,185,129,0.2)' : theme.colors.ui.border};
-  color: ${props => props.$variant === 'success' ? 'rgba(16,185,129,1)' : theme.colors.text.secondary};
+  color: ${props => props.$variant === 'success' ? '#34d399' : theme.colors.text.primary};
   border: 1px solid ${props => props.$variant === 'success' ? 'rgba(16,185,129,0.4)' : theme.colors.ui.border};
   border-radius: ${theme.radius.md}px;
   padding: ${theme.spacing.xs}px ${theme.spacing.sm}px;
@@ -195,6 +205,10 @@ const SmallButton = styled.button`
   transition: all ${theme.transitions.fast};
   &:hover:not(:disabled) { transform: translateY(-1px); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  [data-theme="light"] & {
+    color: ${props => props.$variant === 'success' ? '#065f46' : theme.colors.text.primary};
+  }
 `;
 
 const InputGroup = styled.div`
@@ -230,10 +244,12 @@ const SuccessMessage = styled.div`
   border: 1px solid rgba(16,185,129,0.3);
   border-radius: ${theme.radius.md}px;
   padding: ${theme.spacing.md}px;
-  color: rgba(16,185,129,1);
+  color: #34d399;
   font-size: ${theme.typography.fontSize.sm}px;
   margin-bottom: ${theme.spacing.md}px;
   display: flex; align-items: center; gap: ${theme.spacing.sm}px;
+
+  [data-theme="light"] & { color: #065f46; font-weight: 600; }
 `;
 
 const InfoBox = styled.div`
@@ -241,9 +257,11 @@ const InfoBox = styled.div`
   border: 1px solid rgba(59,130,246,0.3);
   border-radius: ${theme.radius.md}px;
   padding: ${theme.spacing.md}px;
-  color: rgba(147,197,253,1);
+  color: #93c5fd;
   font-size: ${theme.typography.fontSize.sm}px;
   margin-bottom: ${theme.spacing.md}px;
+
+  [data-theme="light"] & { color: #1d4ed8; }
 `;
 
 const UploadSection = styled.div`
@@ -253,6 +271,7 @@ const UploadSection = styled.div`
   padding: ${theme.spacing.lg}px;
   margin-bottom: ${theme.spacing.lg}px;
   text-align: center;
+  color: ${theme.colors.text.primary};
 `;
 
 const UploadButton = styled.label`
@@ -318,10 +337,12 @@ const FTABadge = styled.div`
   border: 1px solid rgba(16,185,129,0.4);
   border-radius: ${theme.radius.md}px;
   padding: ${theme.spacing.sm}px ${theme.spacing.md}px;
-  color: rgba(16,185,129,1);
+  color: #34d399;
   font-size: 12px;
   display: flex; align-items: center; gap: 8px;
   margin-top: ${theme.spacing.sm}px;
+
+  [data-theme="light"] & { color: #065f46; font-weight: 600; }
 `;
 
 const ADDBadge = styled.div`
@@ -329,10 +350,12 @@ const ADDBadge = styled.div`
   border: 1px solid rgba(239,68,68,0.3);
   border-radius: ${theme.radius.md}px;
   padding: ${theme.spacing.sm}px ${theme.spacing.md}px;
-  color: rgba(252,165,165,1);
+  color: #fca5a5;
   font-size: 12px;
   display: flex; align-items: center; gap: 8px;
   margin-top: ${theme.spacing.sm}px;
+
+  [data-theme="light"] & { color: #b91c1c; font-weight: 600; }
 `;
 
 const SopSection = styled.div`
@@ -419,6 +442,22 @@ const fmtFx = (v, ccy) => {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+const HSN_KEYS = ['hsn_code', 'hs_code', 'hscode', 'HS Code/HSN Code', 'HSN Code', 'hs_tariff_code', 'tariff_code', 'commodity_code'];
+
+/**
+ * Scan an extracted-fields object for an HSN code.
+ * Checks top-level keys first, then line_items.
+ */
+function extractHsnFromFields(ef = {}) {
+  for (const k of HSN_KEYS) { if (ef[k]) return String(ef[k]).trim(); }
+  if (Array.isArray(ef.line_items)) {
+    for (const item of ef.line_items) {
+      for (const k of HSN_KEYS) { if (item?.[k]) return String(item[k]).trim(); }
+    }
+  }
+  return null;
+}
+
 const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
   const computeRef = React.useRef(null);   // scroll-to after auto-fill
   const resultRef  = React.useRef(null);   // scroll-to after compute
@@ -469,6 +508,56 @@ const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
   // AI HSN lookup
   const [hsnLoading, setHsnLoading] = useState(false);
   const [hsnFromDocument, setHsnFromDocument] = useState(false); // true when HS code came from uploaded doc
+
+  // ── DocumentContext — read extracted HSN from Document Management ──────────
+  const { files: ctxFiles, m02States: ctxM02 } = useDocumentContext();
+
+  // Auto-fill HSN (and other fields) from the most recent completed M02 extraction
+  // in DocumentContext, so documents processed in Document Management flow directly
+  // into the Duty Engine without re-uploading.
+  useEffect(() => {
+    if (!ctxFiles || !ctxM02) return;
+
+    // Find the last file that has a completed M02 extraction with an HSN code
+    let foundHsn = null;
+    let foundFields = null;
+    let foundFileName = null;
+
+    for (let i = ctxFiles.length - 1; i >= 0; i--) {
+      const m02 = ctxM02[i];
+      if (m02?.status !== 'done' || !m02.result) continue;
+      const ef = m02.result.normalised_fields || m02.result.extracted_fields || {};
+      const hsn = extractHsnFromFields(ef);
+      if (hsn) {
+        foundHsn = hsn;
+        foundFields = ef;
+        foundFileName = ctxFiles[i]?.file?.name || ctxFiles[i]?.name || 'Document';
+        break;
+      }
+    }
+
+    if (!foundHsn || !foundFields) return;
+
+    // Only auto-fill if no HSN is already in the form (avoid overwriting manual input)
+    setForm(f => {
+      if (f.hsn_code) return f; // already filled — don't overwrite
+      const lineItems = Array.isArray(foundFields.line_items) ? foundFields.line_items : [];
+      const item0 = lineItems[0] || {};
+      return {
+        ...f,
+        hsn_code: foundHsn,
+        product_description: f.product_description || item0.description || item0.goods_description || foundFields.goods_description || foundFields['Goods Description'] || '',
+        country_of_origin: f.country_of_origin || foundFields.country_of_origin || foundFields['Country of Origin'] || '',
+        quantity: f.quantity || String(item0.quantity || item0.qty || foundFields.quantity || ''),
+        unit: f.unit || item0.unit || item0.uom || 'PCS',
+        fob_cost: f.fob_cost || String(item0.unit_price || item0.total_value || item0.amount || ''),
+        input_currency: f.input_currency !== 'USD' ? f.input_currency : (foundFields.currency || foundFields['Currency'] || 'USD'),
+      };
+    });
+    setHsnFromDocument(true);
+    setSuccess(`HSN auto-filled from "${foundFileName}" (Document Management) — ready to compute`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctxFiles, ctxM02]);
 
   // ── On mount ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -686,6 +775,24 @@ const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
       };
       const res = await m04Service.compute(payload);
       setResult(res);
+
+      // Persist for BOE auto-fill — BillOfEntryPanel reads this on mount
+      try {
+        localStorage.setItem('lastDutyComputation', JSON.stringify({
+          computation_uuid:     res.computation_uuid,
+          document_id:          selectedDoc ? parseInt(selectedDoc) : null,
+          saved_at:             new Date().toISOString(),
+          assessable_value_inr: res.assessable_value_inr,
+          total_duty_inr:       res.total_duty_inr,
+          total_payable_inr:    res.total_payable_inr,
+          igst_amount:          res.duties?.igst_amount,
+          bcd_amount:           res.duties?.bcd_amount,
+          hsn_code:             form.hsn_code,
+          country_of_origin:    form.country_of_origin,
+          port_code:            form.port_code,
+        }));
+      } catch (_) {}
+
       // Scroll to results panel after computation
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch (err) {
@@ -1256,6 +1363,63 @@ const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
                 <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(107,114,128,1)' }}>
                   Computed in {result.calculation_time_ms}ms · UUID: {result.computation_uuid}
                 </div>
+              </Card>
+
+              {/* ── File BOE CTA ──────────────────────────────────────────────── */}
+              <Card style={{
+                border: '1px solid rgba(16,185,129,0.45)',
+                background: 'rgba(16,185,129,0.04)',
+              }}>
+                <CardHeader>
+                  <CardTitle style={{ color: '#34d399' }}>📄 Ready to File Bill of Entry</CardTitle>
+                </CardHeader>
+                <div style={{ fontSize: 13, color: 'var(--t-text-sub)', marginBottom: 14, lineHeight: 1.7 }}>
+                  These duty figures have been saved automatically. Open the
+                  <strong style={{ color: 'var(--t-text)' }}> Bill of Entry Filing</strong> module
+                  and select your document — the calculations below will be injected directly:
+                </div>
+
+                <div style={{
+                  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  gap: 10, marginBottom: 16,
+                }}>
+                  {[
+                    ['Assessable Value', `₹${Number(result.assessable_value_inr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`],
+                    ['Custom Duty',      `₹${Number(result.total_duty_inr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`],
+                    ['IGST',             `₹${Number(result.duties?.igst_amount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`],
+                    ['Total Payable',    `₹${Number(result.total_payable_inr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`],
+                  ].map(([label, val]) => (
+                    <div key={label} style={{
+                      background: 'var(--t-bg-dark)', borderRadius: 8,
+                      padding: '10px 14px', border: '1px solid var(--t-border)',
+                    }}>
+                      <div style={{ fontSize: 10, color: 'var(--t-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{label}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#34d399' }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 11, color: 'rgba(107,114,128,1)', marginBottom: 14 }}>
+                  Computation UUID:&nbsp;
+                  <code style={{ color: '#60a5fa', background: 'rgba(59,130,246,0.1)', padding: '1px 6px', borderRadius: 4 }}>
+                    {result.computation_uuid}
+                  </code>
+                  &nbsp;— saved to session storage
+                </div>
+
+                <SmallButton
+                  type="button"
+                  $variant="success"
+                  style={{ fontSize: 13, padding: '10px 20px' }}
+                  onClick={() => {
+                    // Signal the BOE panel via a custom event so the app can navigate
+                    window.dispatchEvent(new CustomEvent('orbis:openBOE', {
+                      detail: { computation_uuid: result.computation_uuid }
+                    }));
+                  }}
+                >
+                  Open Bill of Entry Filing →
+                </SmallButton>
               </Card>
             </>
           )}

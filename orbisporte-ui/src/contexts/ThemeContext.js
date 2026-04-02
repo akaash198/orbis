@@ -1,32 +1,41 @@
-/**
- * ThemeContext — Dark / Light mode
- * Persists preference to localStorage and applies `data-theme` to <html>.
- */
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-const ThemeContext = createContext({ isDark: true, toggleTheme: () => {} });
+const ThemeContext = createContext({
+  theme: 'dark',
+  toggleTheme: () => {},
+  isDark: true,
+});
 
 export function ThemeContextProvider({ children }) {
-  const [isDark, setIsDark] = useState(() => {
-    try { return localStorage.getItem('orbis-theme') !== 'light'; }
-    catch { return true; }
+  const [theme, setTheme] = useState(() => {
+    try { 
+      const saved = localStorage.getItem('orbis-theme');
+      return saved === 'light' ? 'light' : 'dark';
+    } catch { 
+      return 'dark'; 
+    }
   });
 
-  // Apply data-theme to <html> whenever mode changes
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    try { localStorage.setItem('orbis-theme', isDark ? 'dark' : 'light'); } catch {}
-  }, [isDark]);
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  }, []);
 
-  const toggleTheme = () => setIsDark(prev => !prev);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { 
+      localStorage.setItem('orbis-theme', theme); 
+    } catch {}
+  }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === 'dark' }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export function useTheme() {
+  return useContext(ThemeContext);
+}
+
 export default ThemeContext;
