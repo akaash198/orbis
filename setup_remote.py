@@ -40,6 +40,8 @@ def run_setup(host, port, user, password, local_zip):
         cmds = [
             "cd /opt/orbisporte && unzip -o orbisporte.zip -d .",
             "cd /opt/orbisporte && (test -f .env || cp .env.example .env)",
+            "sed -i 's|API_URL=.*|API_URL=/api|' /opt/orbisporte/.env",
+            "sed -i 's|API_BASE_URL=.*|API_BASE_URL=/api|' /opt/orbisporte/.env",
             "cd /opt/orbisporte && docker compose -f docker-compose.prod.yml up -d --build --remove-orphans"
         ]
         for cmd in cmds:
