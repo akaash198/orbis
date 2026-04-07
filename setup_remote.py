@@ -42,7 +42,9 @@ def run_setup(host, port, user, password, local_zip):
             "cd /opt/orbisporte && (test -f .env || cp .env.example .env)",
             "sed -i 's|API_URL=.*|API_URL=/api|' /opt/orbisporte/.env",
             "sed -i 's|API_BASE_URL=.*|API_BASE_URL=/api|' /opt/orbisporte/.env",
-            "cd /opt/orbisporte && docker compose -f docker-compose.prod.yml up -d --build --remove-orphans"
+            "cd /opt/orbisporte && docker compose -f docker-compose.prod.yml up -d --build --remove-orphans",
+            "echo 'Initializing database and running migrations...'",
+            "docker exec orbisporte-backend python migrate.py"
         ]
         for cmd in cmds:
             print(f"Executing: {cmd}")
