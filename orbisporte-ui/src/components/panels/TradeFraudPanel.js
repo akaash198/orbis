@@ -33,13 +33,13 @@ const Header = styled.div`
 `;
 const Title = styled.h2`
   margin:0;font-size:20px;font-weight:700;
-  background:linear-gradient(135deg,#60a5fa 0%,#38bdf8 55%,#22d3ee 100%);
+  background:linear-gradient(135deg,#E8C84A 0%,#6BBCD4 55%,#8DD4EC 100%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   display:flex;align-items:center;gap:10px;
 `;
 const Badge = styled.span`
   font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;
-  background:${p=>p.bg||'rgba(59,130,246,0.2)'};color:${p=>p.color||'var(--t-btn-color)'};
+  background:${p=>p.bg||'rgba(201,165,32,0.2)'};color:${p=>p.color||'var(--t-btn-color)'};
   letter-spacing:.5px;text-transform:uppercase;-webkit-text-fill-color:unset;
 `;
 const Card = styled.div`
@@ -59,7 +59,7 @@ const Grid = styled.div`
 const Tabs = styled.div`display:flex;gap:4px;border-bottom:1px solid var(--t-border);`;
 const Tab  = styled.button`
   padding:8px 16px;font-size:12px;font-weight:600;border:none;background:transparent;
-  cursor:pointer;border-bottom:2px solid ${p=>p.active?'#3B82F6':'transparent'};
+  cursor:pointer;border-bottom:2px solid ${p=>p.active?'#C9A520':'transparent'};
   color:${p=>p.active?'var(--t-btn-color)':'var(--t-text-sub)'};transition:all .2s;
   &:hover{color:var(--t-text)}
 `;
@@ -69,15 +69,15 @@ const FilingList = styled.div`display:flex;flex-direction:column;gap:8px;`;
 const FilingRow  = styled.div`
   display:flex;align-items:center;gap:12px;
   padding:14px 16px;border-radius:10px;cursor:pointer;
-  border:2px solid ${p=>p.selected?'#3B82F6':'var(--t-border)'};
-  background:${p=>p.selected?'rgba(59,130,246,0.1)':'var(--t-bg-dark)'};
+  border:2px solid ${p=>p.selected?'#C9A520':'var(--t-border)'};
+  background:${p=>p.selected?'rgba(201,165,32,0.1)':'var(--t-bg-dark)'};
   transition:all .2s;
-  &:hover{border-color:rgba(59,130,246,0.5);background:var(--t-hover)}
+  &:hover{border-color:rgba(201,165,32,0.5);background:var(--t-hover)}
 `;
 const FilingRadio = styled.div`
   width:16px;height:16px;border-radius:50%;flex-shrink:0;
-  border:2px solid ${p=>p.selected?'#3B82F6':'var(--t-border)'};
-  background:${p=>p.selected?'#3B82F6':'transparent'};
+  border:2px solid ${p=>p.selected?'#C9A520':'var(--t-border)'};
+  background:${p=>p.selected?'#C9A520':'transparent'};
   display:flex;align-items:center;justify-content:center;
   &::after{
     content:'';display:${p=>p.selected?'block':'none'};
@@ -97,17 +97,17 @@ const RunBtn = styled.button`
   display:flex;align-items:center;justify-content:center;gap:10px;
   padding:14px 32px;border-radius:10px;border:none;font-size:15px;font-weight:700;
   cursor:pointer;transition:all .2s;width:100%;
-  background:${p=>p.disabled?'var(--t-btn-dis-bg)':'linear-gradient(135deg,#3B82F6,#2563EB)'};
+  background:${p=>p.disabled?'var(--t-btn-dis-bg)':'linear-gradient(135deg,#C9A520,#876E12)'};
   color:${p=>p.disabled?'var(--t-text-dis)':'#fff'};
-  box-shadow:${p=>p.disabled?'none':'0 4px 20px rgba(59,130,246,0.3)'};
-  &:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(59,130,246,0.4)}
+  box-shadow:${p=>p.disabled?'none':'0 4px 20px rgba(201,165,32,0.3)'};
+  &:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(201,165,32,0.4)}
   &:disabled{cursor:not-allowed}
 `;
 
 // ─── Misc ──────────────────────────────────────────────────────────────────────
 const Spinner  = styled.div`
   width:${p=>p.size||20}px;height:${p=>p.size||20}px;border-radius:50%;
-  border:2px solid rgba(59,130,246,0.2);border-top-color:#3B82F6;
+  border:2px solid rgba(201,165,32,0.2);border-top-color:#C9A520;
   animation:${spinAnim} .8s linear infinite;flex-shrink:0;
 `;
 const Pulsing  = styled.div`animation:${pulseAnim} 1.5s ease infinite;color:var(--t-text-sub);font-size:13px;`;
@@ -146,7 +146,7 @@ const BarName = styled.div`font-size:11px;color:var(--t-text-sub);width:150px;fl
 const BarBg   = styled.div`flex:1;background:var(--t-hover-dark);border-radius:4px;height:7px;overflow:hidden;`;
 const ResultRoot = styled.div`display:flex;flex-direction:column;gap:16px;animation:${fadeIn} .4s ease;`;
 const BarFill = styled.div`
-  height:100%;border-radius:4px;background:${p=>p.color||'#3B82F6'};
+  height:100%;border-radius:4px;background:${p=>p.color||'#C9A520'};
   --w:${p=>p.pct}%;animation:${fillBar} .8s ease forwards;width:var(--w);
 `;
 const BarVal  = styled.div`font-size:11px;color:var(--t-text);width:36px;text-align:right;`;
@@ -197,7 +197,7 @@ const FRAUD_DISPLAY = {
 };
 
 const SCORE_META = [
-  { key:'ecod',      label:'ECOD — Value Anomaly',    color:'#3B82F6' },
+  { key:'ecod',      label:'ECOD — Value Anomaly',    color:'#C9A520' },
   { key:'hclnet',    label:'HCLNet — Network Graph',  color:'#a78bfa' },
   { key:'hsn',       label:'HSN Manipulation',        color:'#fbbf24' },
   { key:'benford',   label:"Benford's Law",            color:'#f59e0b' },
@@ -271,9 +271,9 @@ export default function TradeFraudPanel() {
       <Header>
         <Title>
           🔍 Trade Fraud Detection Engine
-          <Badge bg="rgba(59,130,246,0.15)" color="var(--t-btn-color)">M06</Badge>
+          <Badge bg="rgba(201,165,32,0.15)" color="var(--t-btn-color)">M06</Badge>
           <Badge bg="rgba(16,185,129,0.1)"  color="#34d399">HCLNet</Badge>
-          <Badge bg="rgba(6,182,212,0.1)"   color="var(--t-btn-color)">ECOD</Badge>
+          <Badge bg="rgba(107,188,212,0.1)"   color="var(--t-btn-color)">ECOD</Badge>
         </Title>
       </Header>
 
@@ -351,8 +351,8 @@ export default function TradeFraudPanel() {
 
             {selectedFiling ? (
               <div style={{fontSize:12,color:'var(--t-text-sub)',padding:'8px 12px',
-                background:'rgba(59,130,246,0.08)',borderRadius:8,
-                border:'1px solid rgba(59,130,246,0.2)'}}>
+                background:'rgba(201,165,32,0.08)',borderRadius:8,
+                border:'1px solid rgba(201,165,32,0.2)'}}>
                 Selected: <b style={{color:'var(--t-text)'}}>
                   {selectedFiling.importer_name || selectedFiling.importer_iec || `Filing #${selectedFiling.filing_id}`}
                 </b>
@@ -572,7 +572,7 @@ function AnalysisResult({ result }) {
                   alignItems:'center',gap:2,height:'100%',justifyContent:'flex-end'}}>
                   <div style={{display:'flex',gap:1,alignItems:'flex-end',
                     height:70,width:'100%',justifyContent:'center'}}>
-                    <div style={{flex:1,borderRadius:'3px 3px 0 0',background:'#3B82F6',
+                    <div style={{flex:1,borderRadius:'3px 3px 0 0',background:'#C9A520',
                       height:`${Math.min(obs*3,100)}%`,minHeight:obs>0?2:0,
                       transition:'height .5s ease'}} title={`Obs: ${obs.toFixed(1)}%`}/>
                     <div style={{flex:1,borderRadius:'3px 3px 0 0',background:'rgba(255,255,255,0.2)',
@@ -614,7 +614,7 @@ function AnalysisResult({ result }) {
           ))}
           {details.hsn_patterns.frequent_patterns?.slice(0,3).map((p,i)=>(
             <div key={i} style={{fontSize:12,color:'var(--t-text)',fontFamily:'monospace',
-              background:'rgba(59,130,246,0.1)',padding:'4px 8px',borderRadius:4}}>
+              background:'rgba(201,165,32,0.1)',padding:'4px 8px',borderRadius:4}}>
               {p.sequence?.join(' → ')} <span style={{color:'var(--t-text-sub)'}}>(×{p.support} shipments)</span>
             </div>
           ))}

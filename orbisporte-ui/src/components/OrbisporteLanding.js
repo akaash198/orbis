@@ -60,7 +60,7 @@ const OrbisporteLanding = ({ onLogin, onSignup }) => {
       }
 
       draw() {
-        ctx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`;
+        ctx.fillStyle = `rgba(201, 165, 32, ${this.opacity})`;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -87,7 +87,7 @@ const OrbisporteLanding = ({ onLogin, onSignup }) => {
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < 100) {
-            ctx.strokeStyle = `rgba(59, 130, 246, ${0.2 * (1 - distance / 100)})`;
+            ctx.strokeStyle = `rgba(201, 165, 32, ${0.2 * (1 - distance / 100)})`;
             ctx.lineWidth = 0.5;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -461,8 +461,8 @@ const shimmer = keyframes`
 `;
 
 const glow = keyframes`
-  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-  50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8), 0 0 60px rgba(139, 92, 246, 0.4); }
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 165, 32, 0.5); }
+  50% { box-shadow: 0 0 40px rgba(201, 165, 32, 0.8), 0 0 60px rgba(139, 92, 246, 0.4); }
 `;
 
 const fadeInUp = keyframes`
@@ -494,14 +494,14 @@ const shine = keyframes`
 
 const glowPulse = keyframes`
   0%, 100% {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6),
+    box-shadow: 0 0 30px rgba(201, 165, 32, 0.6),
                 0 0 60px rgba(139, 92, 246, 0.4),
-                inset 0 0 30px rgba(59, 130, 246, 0.3);
+                inset 0 0 30px rgba(201, 165, 32, 0.3);
   }
   50% {
-    box-shadow: 0 0 50px rgba(59, 130, 246, 0.9),
+    box-shadow: 0 0 50px rgba(201, 165, 32, 0.9),
                 0 0 100px rgba(139, 92, 246, 0.6),
-                inset 0 0 50px rgba(59, 130, 246, 0.5);
+                inset 0 0 50px rgba(201, 165, 32, 0.5);
   }
 `;
 
@@ -535,8 +535,8 @@ const LandingHeader = styled.header`
   backdrop-filter: blur(30px);
   box-shadow:
     0 10px 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(59, 130, 246, 0.1);
-  border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+    0 0 0 1px rgba(201, 165, 32, 0.1);
+  border-bottom: 2px solid rgba(201, 165, 32, 0.2);
   position: relative;
   z-index: 10;
 
@@ -550,7 +550,7 @@ const LandingHeader = styled.header`
     height: 3px;
     background: linear-gradient(90deg,
       transparent 0%,
-      rgba(59, 130, 246, 1) 50%,
+      rgba(201, 165, 32, 1) 50%,
       transparent 100%);
     filter: blur(2px);
   }
@@ -572,7 +572,7 @@ const AnimatedGlobe = styled.div`
   animation: ${float} 4s ease-in-out infinite;
   transform: translateX(${props => props.$mouseX * 0.3}px) translateY(${props => props.$mouseY * 0.3}px);
   transition: transform 0.1s ease-out;
-  filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.8));
+  filter: drop-shadow(0 0 30px rgba(201, 165, 32, 0.8));
 
   &::before {
     content: '';
@@ -582,7 +582,7 @@ const AnimatedGlobe = styled.div`
     right: -20px;
     bottom: -20px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.2) 50%, transparent 70%);
+    background: radial-gradient(circle, rgba(201, 165, 32, 0.4) 0%, rgba(139, 92, 246, 0.2) 50%, transparent 70%);
     animation: ${glowPulse} 3s ease-in-out infinite;
     z-index: -1;
   }
@@ -595,15 +595,15 @@ const GlobeSphere = styled.div`
   position: relative;
   background: radial-gradient(circle at 35% 35%,
     rgba(100, 200, 255, 1) 0%,
-    rgba(59, 130, 246, 1) 40%,
-    rgba(37, 99, 235, 1) 70%,
-    rgba(29, 78, 216, 1) 100%);
-  border: 3px solid rgba(59, 130, 246, 1);
+    rgba(201, 165, 32, 1) 40%,
+    rgba(135, 110, 18, 1) 70%,
+    rgba(201, 165, 32, 1) 100%);
+  border: 3px solid rgba(201, 165, 32, 1);
   box-shadow:
-    0 0 40px rgba(59, 130, 246, 1),
-    0 0 80px rgba(59, 130, 246, 0.6),
+    0 0 40px rgba(201, 165, 32, 1),
+    0 0 80px rgba(201, 165, 32, 0.6),
     0 0 120px rgba(139, 92, 246, 0.4),
-    inset 0 0 30px rgba(59, 130, 246, 0.4),
+    inset 0 0 30px rgba(201, 165, 32, 0.4),
     inset 15px 15px 30px rgba(255, 255, 255, 0.4),
     inset -15px -15px 30px rgba(0, 0, 0, 0.6);
   overflow: visible;
@@ -632,11 +632,11 @@ const GlobeMeridian = styled.div`
   left: 50%;
   width: 100%;
   height: 100%;
-  border: 2px solid rgba(59, 130, 246, 0.4);
+  border: 2px solid rgba(201, 165, 32, 0.4);
   border-radius: 50%;
   transform: translateX(-50%) rotateY(${props => props.$rotation}deg);
   animation: ${rotate} ${props => props.$speed}s linear infinite;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 10px rgba(201, 165, 32, 0.3);
 `;
 
 const GlobeLatitude = styled.div`
@@ -646,15 +646,15 @@ const GlobeLatitude = styled.div`
   height: 2px;
   background: linear-gradient(to right,
     transparent 0%,
-    rgba(59, 130, 246, 0.4) 10%,
-    rgba(59, 130, 246, 0.8) 50%,
-    rgba(59, 130, 246, 0.4) 90%,
+    rgba(201, 165, 32, 0.4) 10%,
+    rgba(201, 165, 32, 0.8) 50%,
+    rgba(201, 165, 32, 0.4) 90%,
     transparent 100%);
   transform: translateX(-50%);
   top: ${props => props.$position}%;
   opacity: ${props => props.$opacity || 0.7};
   z-index: 1;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 8px rgba(201, 165, 32, 0.4);
 `;
 
 const GlobeRotating = styled.div`
@@ -682,17 +682,17 @@ const LogoTextWrapper = styled.div`
 
 const LogoText = styled.h1`
   font-size: 56px;
-  background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #C9A520 0%, #6BBCD4 50%, #8B5CF6 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 900;
   letter-spacing: 0.08em;
-  filter: drop-shadow(0 4px 20px rgba(59, 130, 246, 0.6));
+  filter: drop-shadow(0 4px 20px rgba(201, 165, 32, 0.6));
   margin: 0;
   animation: ${shimmer} 3s linear infinite;
-  text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+  text-shadow: 0 0 30px rgba(201, 165, 32, 0.5);
 
   @media (max-width: 768px) {
     font-size: 36px;
@@ -727,12 +727,12 @@ const CompanyBadge = styled.span`
   font-size: ${props => props.theme.typography.fontSize.xs};
   font-weight: 600;
   padding: ${props => props.theme.spacing.xs}px ${props => props.theme.spacing.lg}px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(201, 165, 32, 0.1);
+  border: 1px solid rgba(201, 165, 32, 0.3);
   border-radius: ${props => props.theme.radius.full}px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 15px rgba(201, 165, 32, 0.2);
 `;
 
 const ContentWrapper = styled.main`
@@ -786,19 +786,19 @@ const TitleAccent = styled.div`
   left: 0;
   width: 200px;
   height: 4px;
-  background: linear-gradient(90deg, #3B82F6 0%, #06B6D4 50%, transparent 100%);
+  background: linear-gradient(90deg, #C9A520 0%, #6BBCD4 50%, transparent 100%);
   border-radius: 2px;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 20px rgba(201, 165, 32, 0.6);
 `;
 
 const GradientText = styled.span`
-  background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #C9A520 0%, #6BBCD4 50%, #8B5CF6 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: ${shimmer} 3s linear infinite;
-  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+  filter: drop-shadow(0 0 20px rgba(201, 165, 32, 0.5));
 `;
 
 const HeroSubtitle = styled.p`
@@ -826,7 +826,7 @@ const StatItem = styled.div`
   padding: ${props => props.theme.spacing.xl}px;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border: 2px solid rgba(59, 130, 246, 0.2);
+  border: 2px solid rgba(201, 165, 32, 0.2);
   border-radius: ${props => props.theme.radius.xl}px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -840,17 +840,17 @@ const StatItem = styled.div`
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #3B82F6, transparent);
+    background: linear-gradient(90deg, transparent, #C9A520, transparent);
     opacity: 0;
     transition: opacity 0.4s ease;
   }
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(59, 130, 246, 0.6);
+    border-color: rgba(201, 165, 32, 0.6);
     transform: translateY(-10px) scale(1.05);
     box-shadow:
-      0 20px 60px rgba(59, 130, 246, 0.4),
+      0 20px 60px rgba(201, 165, 32, 0.4),
       0 0 60px rgba(139, 92, 246, 0.3);
 
     &::before {
@@ -867,7 +867,7 @@ const StatIconWrapper = styled.div`
 
 const StatIcon = styled.div`
   font-size: 40px;
-  filter: drop-shadow(0 4px 15px rgba(59, 130, 246, 0.5));
+  filter: drop-shadow(0 4px 15px rgba(201, 165, 32, 0.5));
   position: relative;
   z-index: 1;
 `;
@@ -879,7 +879,7 @@ const StatGlow = styled.div`
   transform: translate(-50%, -50%);
   width: 60px;
   height: 60px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(201, 165, 32, 0.4) 0%, transparent 70%);
   border-radius: 50%;
   animation: ${pulse} 2s ease-in-out infinite;
 `;
@@ -887,7 +887,7 @@ const StatGlow = styled.div`
 const StatNumber = styled.div`
   font-size: 36px;
   font-weight: 900;
-  background: linear-gradient(135deg, #ffffff 0%, #3B82F6 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #C9A520 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -907,7 +907,7 @@ const StatRipple = styled.div`
   left: 50%;
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(59, 130, 246, 0.6);
+  border: 2px solid rgba(201, 165, 32, 0.6);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   animation: ${ripple} 2s ease-out infinite;
@@ -936,8 +936,8 @@ const SectionBadge = styled.div`
   align-items: center;
   gap: ${props => props.theme.spacing.sm}px;
   padding: ${props => props.theme.spacing.sm}px ${props => props.theme.spacing.lg}px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(201, 165, 32, 0.1);
+  border: 1px solid rgba(201, 165, 32, 0.3);
   border-radius: ${props => props.theme.radius.full}px;
   color: rgba(255, 255, 255, 0.9);
   font-size: ${props => props.theme.typography.fontSize.xs};
@@ -945,22 +945,22 @@ const SectionBadge = styled.div`
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin-bottom: ${props => props.theme.spacing.lg}px;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(201, 165, 32, 0.3);
 `;
 
 const BadgeDot = styled.div`
   width: 6px;
   height: 6px;
-  background: #3B82F6;
+  background: #C9A520;
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 10px rgba(201, 165, 32, 0.8);
   animation: ${pulse} 2s ease-in-out infinite;
 `;
 
 const SectionTitle = styled.h2`
   font-size: 52px;
   font-weight: 900;
-  background: linear-gradient(135deg, #ffffff 0%, #3B82F6 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #C9A520 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -968,7 +968,7 @@ const SectionTitle = styled.h2`
   letter-spacing: -0.02em;
   position: relative;
   display: inline-block;
-  text-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  text-shadow: 0 4px 20px rgba(201, 165, 32, 0.3);
 
   @media (max-width: 768px) {
     font-size: 32px;
@@ -982,9 +982,9 @@ const TitleUnderline = styled.div`
   transform: translateX(-50%);
   width: 60%;
   height: 3px;
-  background: linear-gradient(90deg, transparent 0%, #3B82F6 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, #C9A520 50%, transparent 100%);
   border-radius: 2px;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 20px rgba(201, 165, 32, 0.6);
 `;
 
 const SectionSubtitle = styled.p`
@@ -1131,7 +1131,7 @@ const FeatureAccent = styled.div`
   right: -20px;
   width: 100px;
   height: 100px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(201, 165, 32, 0.15) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 `;
@@ -1184,9 +1184,9 @@ const IntegrationCard = styled.div`
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(59, 130, 246, 0.6);
+    border-color: rgba(201, 165, 32, 0.6);
     transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 15px 40px rgba(201, 165, 32, 0.4);
   }
 `;
 
@@ -1197,7 +1197,7 @@ const IntegrationGlow = styled.div`
   transform: translate(-50%, -50%);
   width: 80px;
   height: 80px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(201, 165, 32, 0.3) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.4s ease;
@@ -1249,7 +1249,7 @@ const Badge = styled.div`
   padding: ${props => props.theme.spacing.md}px ${props => props.theme.spacing.xl}px;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
-  border: 2px solid rgba(59, 130, 246, 0.3);
+  border: 2px solid rgba(201, 165, 32, 0.3);
   border-radius: ${props => props.theme.radius.full}px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1264,7 +1264,7 @@ const Badge = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(201, 165, 32, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
     opacity: 0;
     transition: opacity 0.4s ease;
   }
@@ -1272,8 +1272,8 @@ const Badge = styled.div`
   &:hover {
     transform: translateY(-5px) scale(1.05);
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(59, 130, 246, 0.6);
-    box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+    border-color: rgba(201, 165, 32, 0.6);
+    box-shadow: 0 10px 40px rgba(201, 165, 32, 0.4);
 
     &::before {
       opacity: 1;
@@ -1300,7 +1300,7 @@ const BadgeGlow = styled.div`
   transform: translate(-50%, -50%);
   width: 30px;
   height: 30px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(201, 165, 32, 0.4) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.4s ease;
@@ -1325,7 +1325,7 @@ const Footer = styled.footer`
   text-align: center;
   background: rgba(10, 14, 39, 0.95);
   backdrop-filter: blur(30px);
-  border-top: 2px solid rgba(59, 130, 246, 0.2);
+  border-top: 2px solid rgba(201, 165, 32, 0.2);
   position: relative;
   z-index: 1;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
@@ -1340,7 +1340,7 @@ const Footer = styled.footer`
     height: 3px;
     background: linear-gradient(90deg,
       transparent 0%,
-      rgba(59, 130, 246, 1) 50%,
+      rgba(201, 165, 32, 1) 50%,
       transparent 100%);
     filter: blur(2px);
   }
@@ -1364,7 +1364,7 @@ const FooterText = styled.p`
 const FooterDivider = styled.div`
   width: 100px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 165, 32, 0.5), transparent);
 `;
 
 export default OrbisporteLanding;

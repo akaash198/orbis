@@ -64,7 +64,7 @@ const Step = styled.div`
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
-  background: ${p => p.active ? 'rgba(59,130,246,0.25)' : p.done ? 'rgba(16,185,129,0.1)' : 'var(--t-bg-dark)'};
+  background: ${p => p.active ? 'rgba(201,165,32,0.25)' : p.done ? 'rgba(16,185,129,0.1)' : 'var(--t-bg-dark)'};
   color: ${p => p.active ? 'var(--t-btn-color)' : p.done ? '#34d399' : 'var(--t-text-sub)'};
   border-right: 1px solid var(--t-border-light);
   &:last-child { border-right: none; }
@@ -124,7 +124,7 @@ const FieldInput = styled.input`
   font-size: 13px;
   outline: none;
   transition: border-color 0.15s;
-  &:focus { border-color: var(--t-btn-color); box-shadow: 0 0 0 3px rgba(59,130,246,0.25); }
+  &:focus { border-color: var(--t-btn-color); box-shadow: 0 0 0 3px rgba(201,165,32,0.25); }
   &:disabled { opacity: 0.5; cursor: not-allowed; background: var(--t-bg-dark); }
 `;
 
@@ -137,7 +137,7 @@ const FieldSelect = styled.select`
   font-size: 13px;
   outline: none;
   cursor: pointer;
-  &:focus { border-color: var(--t-btn-color); box-shadow: 0 0 0 3px rgba(59,130,246,0.25); }
+  &:focus { border-color: var(--t-btn-color); box-shadow: 0 0 0 3px rgba(201,165,32,0.25); }
 `;
 
 const FieldTextarea = styled.textarea`
@@ -155,7 +155,7 @@ const FieldTextarea = styled.textarea`
   resize: vertical;
   min-height: 64px;
   font-family: inherit;
-  &:focus { border-color: var(--t-btn-color); box-shadow: 0 0 0 3px rgba(59,130,246,0.25); }
+  &:focus { border-color: var(--t-btn-color); box-shadow: 0 0 0 3px rgba(201,165,32,0.25); }
 `;
 
 const FieldLabelRow = styled.div`
@@ -216,19 +216,19 @@ const Button = styled.button`
   background: ${p => p.variant === 'danger' ? 'rgba(239,68,68,0.1)' :
                p.variant === 'success' ? 'rgba(16,185,129,0.1)' :
                p.variant === 'outline' ? 'transparent' :
-               'rgba(59,130,246,0.15)'};
+               'rgba(201,165,32,0.15)'};
   color: ${p => p.variant === 'danger' ? '#f87171' :
            p.variant === 'success' ? '#34d399' :
-           p.variant === 'outline' ? 'var(--t-text-sub)' : '#60a5fa'};
+           p.variant === 'outline' ? 'var(--t-text-sub)' : '#E8C84A'};
   border: 1px solid ${p => p.variant === 'danger' ? 'rgba(239,68,68,0.3)' :
                       p.variant === 'success' ? 'rgba(16,185,129,0.3)' :
                       p.variant === 'outline' ? 'var(--t-border)' :
-                      'rgba(59,130,246,0.35)'};
+                      'rgba(201,165,32,0.35)'};
   &:hover:not(:disabled) {
     background: ${p => p.variant === 'danger' ? 'rgba(239,68,68,0.2)' :
                  p.variant === 'success' ? 'rgba(16,185,129,0.2)' :
                  p.variant === 'outline' ? 'var(--t-hover)' :
-                 'rgba(59,130,246,0.25)'};
+                 'rgba(201,165,32,0.25)'};
   }
   &:disabled { opacity: 0.45; cursor: not-allowed; }
 `;
@@ -251,14 +251,14 @@ const Alert = styled.div`
   background: ${p => p.type === 'error' ? 'rgba(239,68,68,0.15)' :
                p.type === 'warning' ? 'rgba(245,158,11,0.15)' :
                p.type === 'success' ? 'rgba(16,185,129,0.15)' :
-               'rgba(59,130,246,0.12)'};
+               'rgba(201,165,32,0.12)'};
   border: 1px solid ${p => p.type === 'error' ? 'rgba(239,68,68,0.4)' :
                       p.type === 'warning' ? 'rgba(245,158,11,0.4)' :
                       p.type === 'success' ? 'rgba(16,185,129,0.4)' :
-                      'rgba(59,130,246,0.35)'};
+                      'rgba(201,165,32,0.35)'};
   color: ${p => p.type === 'error' ? '#f87171' :
            p.type === 'warning' ? '#fbbf24' :
-           p.type === 'success' ? '#34d399' : '#60a5fa'};
+           p.type === 'success' ? '#34d399' : '#E8C84A'};
 `;
 
 const RiskMeter = styled.div`
@@ -338,19 +338,19 @@ const StatusBadge = styled.span`
     p.status === 'ACCEPTED' ? 'rgba(16,185,129,0.15)' :
     p.status === 'REJECTED' ? 'rgba(239,68,68,0.15)' :
     p.status === 'QUERY'    ? 'rgba(245,158,11,0.15)' :
-    p.status === 'PENDING'  ? 'rgba(59,130,246,0.15)' :
+    p.status === 'PENDING'  ? 'rgba(201,165,32,0.15)' :
     'var(--t-hover)'};
   color: ${p =>
     p.status === 'ACCEPTED' ? '#34d399' :
     p.status === 'REJECTED' ? '#f87171' :
     p.status === 'QUERY'    ? '#fbbf24' :
-    p.status === 'PENDING'  ? '#60a5fa' :
+    p.status === 'PENDING'  ? '#E8C84A' :
     'var(--t-text-sub)'};
   border: 1px solid ${p =>
     p.status === 'ACCEPTED' ? 'rgba(16,185,129,0.3)' :
     p.status === 'REJECTED' ? 'rgba(239,68,68,0.3)' :
     p.status === 'QUERY'    ? 'rgba(245,158,11,0.3)' :
-    p.status === 'PENDING'  ? 'rgba(59,130,246,0.3)' :
+    p.status === 'PENDING'  ? 'rgba(201,165,32,0.3)' :
     'var(--t-border)'};
 `;
 
@@ -359,7 +359,7 @@ const LineItemsTable = styled.table`
   border-collapse: collapse;
   font-size: 12px;
   th {
-    background: rgba(59,130,246,0.2);
+    background: rgba(201,165,32,0.2);
     color: var(--t-btn-color);
     padding: 8px 10px;
     text-align: left;
@@ -404,7 +404,7 @@ const Spinner = styled.div`
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(37,99,235,0.2);
+  border: 2px solid rgba(135,110,18,0.2);
   border-top-color: var(--t-btn-color);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -1018,8 +1018,8 @@ const BillOfEntryPanel = () => {
                   <div style={{
                     padding: '9px 14px',
                     borderRadius: 8,
-                    background: 'rgba(59,130,246,0.12)',
-                    border: '1px solid rgba(59,130,246,0.35)',
+                    background: 'rgba(201,165,32,0.12)',
+                    border: '1px solid rgba(201,165,32,0.35)',
                     fontFamily: 'monospace',
                     fontWeight: 700,
                     fontSize: '0.95rem',
@@ -1263,7 +1263,7 @@ const BillOfEntryPanel = () => {
             const pct = v => v != null ? `${Number(v).toFixed(2)}%` : '—';
             const fx  = v => v != null ? Number(v).toLocaleString('en-US', { minimumFractionDigits: 4 }) : '—';
             return (
-              <Card style={{ border: '1px solid rgba(59,130,246,0.35)', background: 'rgba(59,130,246,0.03)' }}>
+              <Card style={{ border: '1px solid rgba(201,165,32,0.35)', background: 'rgba(201,165,32,0.03)' }}>
                 <CardTitle style={{ color: 'var(--t-btn-color)' }}>
                   M04 Duty Engine — Full SOP Breakdown
                   {boeFields.m04_computation_uuid && (
@@ -1314,7 +1314,7 @@ const BillOfEntryPanel = () => {
 
                 {/* Steps 3–7 duty table */}
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#E8C84A', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                     Steps 3–7 — Duty Components
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -1327,7 +1327,7 @@ const BillOfEntryPanel = () => {
                     </thead>
                     <tbody>
                       {[
-                        { label: 'BCD (Step 3)', rate: pct(d.bcd_rate), amount: inr(d.bcd_amount), note: '', color: '#3B82F6' },
+                        { label: 'BCD (Step 3)', rate: pct(d.bcd_rate), amount: inr(d.bcd_amount), note: '', color: '#C9A520' },
                         { label: 'SWS (Step 4)', rate: pct(d.sws_rate), amount: inr(d.sws_amount), note: '10% of BCD', color: '#F59E0B' },
                         { label: `IGST (Step 5) — Base: ${inr(d.igst_base)}`, rate: pct(d.igst_rate), amount: inr(d.igst_amount), note: 'AV+BCD+SWS', color: '#10B981' },
                         d.add_amount > 0 && { label: 'ADD (Step 6)', rate: pct(d.add_rate), amount: inr(d.add_amount), note: d.add_notification_ref || '', color: '#EF4444' },
@@ -1341,10 +1341,10 @@ const BillOfEntryPanel = () => {
                           <td style={{ padding: '7px 10px', color: 'var(--t-text-sub)', fontSize: 11 }}>{row.note}</td>
                         </tr>
                       ))}
-                      <tr style={{ borderTop: '2px solid var(--t-border)', background: 'rgba(59,130,246,0.05)' }}>
+                      <tr style={{ borderTop: '2px solid var(--t-border)', background: 'rgba(201,165,32,0.05)' }}>
                         <td style={{ padding: '8px 10px', fontWeight: 700, color: 'var(--t-text)' }}>TOTAL DUTY</td>
                         <td />
-                        <td style={{ padding: '8px 10px', fontWeight: 700, fontSize: 15, color: '#60a5fa' }}>{inr(d.total_duty_inr)}</td>
+                        <td style={{ padding: '8px 10px', fontWeight: 700, fontSize: 15, color: '#E8C84A' }}>{inr(d.total_duty_inr)}</td>
                         <td />
                       </tr>
                       <tr style={{ background: 'rgba(16,185,129,0.05)' }}>
@@ -1449,8 +1449,8 @@ const BillOfEntryPanel = () => {
                           <td style={{ whiteSpace: 'nowrap' }}>{fmt(item.quantity)} {item.unit || 'NOS'}</td>
                           <td style={{ whiteSpace: 'nowrap' }}>{item.cif_foreign != null ? Number(item.cif_foreign).toFixed(2) : '—'}</td>
                           <td style={{ color: '#A78BFA', fontWeight: 600 }}>{fmtInr(item.custom_value_inr || item.assessable_value)}</td>
-                          <td style={{ color: '#3B82F6' }}>{item.bcd_rate != null ? `${item.bcd_rate}%` : '—'}</td>
-                          <td style={{ color: '#3B82F6', fontWeight: 600 }}>{inr(item.bcd_amount)}</td>
+                          <td style={{ color: '#C9A520' }}>{item.bcd_rate != null ? `${item.bcd_rate}%` : '—'}</td>
+                          <td style={{ color: '#C9A520', fontWeight: 600 }}>{inr(item.bcd_amount)}</td>
                           <td>{inr(item.sws_amount)}</td>
                           <td style={{ color: '#10B981' }}>{item.igst_rate != null ? `${item.igst_rate}%` : '—'}</td>
                           <td style={{ color: '#10B981', fontWeight: 600 }}>{inr(item.igst_amount)}</td>
@@ -1461,7 +1461,7 @@ const BillOfEntryPanel = () => {
                           </td>
                           <td>{inr(item.cvd_amount)}</td>
                           <td>{inr(item.sgd_amount)}</td>
-                          <td style={{ color: '#60a5fa', fontWeight: 700 }}>{inr(item.total_duty)}</td>
+                          <td style={{ color: '#E8C84A', fontWeight: 700 }}>{inr(item.total_duty)}</td>
                           <td style={{ color: '#34d399', fontWeight: 700 }}>{fmtInr(totalPayable)}</td>
                           <td>
                             {item.fta_applicable && item.fta_agreement_code
@@ -1566,7 +1566,7 @@ const BillOfEntryPanel = () => {
                 <span style={{
                   fontFamily: 'monospace', fontWeight: 700, fontSize: '0.9rem',
                   color: 'var(--t-btn-color)',
-                  background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
+                  background: 'rgba(201,165,32,0.12)', border: '1px solid rgba(201,165,32,0.3)',
                   padding: '3px 10px', borderRadius: 6,
                 }}>
                   {boeFields.boe_number}
@@ -1678,9 +1678,9 @@ const BillOfEntryPanel = () => {
                       <span style={{
                         fontFamily: 'monospace', fontWeight: 700,
                         fontSize: '0.82rem', color: 'var(--t-btn-color)',
-                        background: 'rgba(59,130,246,0.10)',
+                        background: 'rgba(201,165,32,0.10)',
                         padding: '2px 7px', borderRadius: 5,
-                        border: '1px solid rgba(59,130,246,0.25)',
+                        border: '1px solid rgba(201,165,32,0.25)',
                         whiteSpace: 'nowrap',
                       }}>
                         {f.boe_number || `#${f.id}`}

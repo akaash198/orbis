@@ -1268,6 +1268,574 @@ export const m07Service = {
   },
 };
 
+// ============================================================================
+// M03 HSN CLASSIFICATION ENGINE SERVICE
+// normalize → embed → retrieve → classify → post-process → route
+// ============================================================================
+export const m03Service = {
+  /**
+   * Classify a product description under 8-digit HSN
+   * @param {string} productDescription - Product description
+   * @param {string} [countryOfOrigin] - ISO country code
+   * @param {number} [documentId] - Optional document ID
+   */
+  async classify(productDescription, countryOfOrigin = null, documentId = null) {
+    try {
+      const payload = { product_description: productDescription };
+      if (countryOfOrigin) payload.country_of_origin = countryOfOrigin;
+      if (documentId) payload.document_id = documentId;
+      
+      const response = await apiClient.post('/m03/classify', payload);
+      return response.data;
+    } catch (error) {
+      console.error('[m03Service] classify error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Classify multiple line-items in one request
+   * @param {Array} items - [{description, country_of_origin?, document_id?}]
+   */
+  async classifyBatch(items) {
+    try {
+      const response = await apiClient.post('/m03/classify-batch', { items });
+      return response.data;
+    } catch (error) {
+      console.error('[m03Service] classifyBatch error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get a stored M03 classification result
+   * @param {number} resultId
+   */
+  async getResult(resultId) {
+    try {
+      const response = await apiClient.get(`/m03/result/${resultId}`);
+      return response.data;
+    } catch (error) {
+      console.error('[m03Service] getResult error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Submit human review (approve/reject/override)
+   * @param {number} resultId
+   * @param {Object} review - {approved, reviewer_hsn_override?, notes?}
+   */
+  async reviewResult(resultId, review) {
+    try {
+      const payload = {};
+      if (review.approved !== undefined) payload.approved = review.approved;
+      if (review.reviewer_hsn_override) payload.reviewer_hsn_override = review.reviewer_hsn_override;
+      if (review.notes) payload.notes = review.notes;
+      
+      const response = await apiClient.patch(`/m03/review/${resultId}`, payload);
+      return response.data;
+    } catch (error) {
+      console.error('[m03Service] reviewResult error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * List M03 results pending human review
+   * @param {number} [limit]
+   */
+  async getQueue(limit = 50) {
+    try {
+      const response = await apiClient.get(`/m03/queue?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('[m03Service] getQueue error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get seed status - how many HSN codes are embedded in pgvector
+   */
+  async getSeedStatus() {
+    try {
+      const response = await apiClient.get('/m03/seed-status');
+      return response.data;
+    } catch (error) {
+      console.error('[m03Service] getSeedStatus error:', error);
+      throw error;
+    }
+  },
+};
+
+// ============================================================================
+// M05 BILL OF ENTRY SERVICE
+// Prepare → Validate → Submit → Track → Resolve Queries
+// ============================================================================
+export const m05Service = {
+  /**
+   * Aggregate M01–M04 data into pre-filled BoE payload
+   * @param {number} documentId
+   * @param {string} [portOfImport] - ICEGATE port code
+   * @param {string} [m04ComputationUuid]
+   */
+  async prepareBoE(documentId, portOfImport = 'INMAA1', m04ComputationUuid = null) {
+    try {
+      const payload = { document_id: documentId, port_of_import: portOfImport };
+      if (m04ComputationUuid) payload.m04_computation_uuid = m04ComputationUuid;
+      
+      const response = await apiClient.post('/m05/prepare', payload);
+      return response.data;
+    } catch (error) {
+      console.error('[m05Service] prepareBoE error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Validate all BoE fields before submission
+   * @param {Object} boeFields
+   * @param {Array} lineItems
+   */
+  async validateBoE(boeFields, lineItems) {
+    try {
+      const response = await apiClient.post('/m05/validate', {
+        boe_fields: boeFields,
+        line_items: lineItems,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[m05Service] validateBoE error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Submit BoE to ICEGATE
+   * @param {number} filingId
+   * @param {Object} boeFields
+   * @param {Array} lineItems
+   */
+  async submitBoE(filingId, boeFields, lineItems) {
+    try {
+      const response = await apiClient.post('/m05/submit', {
+        filing_id: filingId,
+        boe_fields: boeFields,
+        line_items: lineItems,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[m05Service] submitBoE error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get BoE filing status
+   * @param {number} filingId
+   */
+  async getFilingStatus(filingId) {
+    try {
+      const response = await apiClient.get(`/m05/status/${filingId}`);
+      return response.data;
+    } catch (error) {
+      console.error('[m05Service] getFilingStatus error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Draft LLM response to ICEGATE customs query
+   * @param {number} filingId
+   * @param {string} queryText
+   * @param {string} [additionalContext]
+   */
+  async resolveQuery(filingId, queryText, additionalContext = null) {
+    try {
+      const payload = { filing_id: filingId, query_text: queryText };
+      if (additionalContext) payload.additional_context = additionalContext;
+      
+      const response = await apiClient.post('/m05/resolve-query', payload);
+      return response.data;
+    } catch (error) {
+      console.error('[m05Service] resolveQuery error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Download BoE as PDF
+   * @param {number} filingId
+   */
+  async downloadPDF(filingId) {
+    try {
+      const response = await apiClient.get(`/m05/pdf/${filingId}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `BoE_${filingId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { success: true };
+    } catch (error) {
+      console.error('[m05Service] downloadPDF error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a BoE filing
+   * @param {number} filingId
+   */
+  async deleteFiling(filingId) {
+    try {
+      const response = await apiClient.delete(`/m05/filing/${filingId}`);
+      return response.data;
+    } catch (error) {
+      console.error('[m05Service] deleteFiling error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user's BoE filing history
+   * @param {number} [limit]
+   */
+  async getHistory(limit = 20) {
+    try {
+      const response = await apiClient.get(`/m05/history?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('[m05Service] getHistory error:', error);
+      throw error;
+    }
+  },
+};
+
+// ============================================================================
+// DATA INTAKE SERVICE
+// Upload → Barcode → Voice → SFTP → Email → Registry
+// ============================================================================
+export const intakeService = {
+  /**
+   * Upload a document (REST API / Web Portal)
+   * @param {File} file
+   * @param {string} [sourceChannel] - 'api' | 'portal'
+   * @param {string} [sourceSystem]
+   */
+  async uploadDocument(file, sourceChannel = 'api', sourceSystem = null) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('source_channel', sourceChannel);
+      if (sourceSystem) formData.append('source_system', sourceSystem);
+
+      const response = await apiClient.post('/intake/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] uploadDocument error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Scan barcode / QR code from an image
+   * @param {File} imageFile
+   */
+  async scanBarcodeFromImage(imageFile) {
+    try {
+      const formData = new FormData();
+      formData.append('file', imageFile);
+
+      const response = await apiClient.post('/intake/barcode/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] scanBarcodeFromImage error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Submit raw barcode payload from hardware scanner
+   * @param {string} payload - Raw barcode string
+   */
+  async submitRawBarcode(payload) {
+    try {
+      const response = await apiClient.post('/intake/barcode/raw', payload, {
+        headers: { 'Content-Type': 'text/plain' },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] submitRawBarcode error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Upload audio for ASR transcription
+   * @param {File} audioFile
+   */
+  async uploadVoice(audioFile) {
+    try {
+      const formData = new FormData();
+      formData.append('file', audioFile);
+
+      const response = await apiClient.post('/intake/voice', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] uploadVoice error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Trigger SFTP batch poll (admin only)
+   */
+  async triggerSFTP() {
+    try {
+      const response = await apiClient.post('/intake/sftp/trigger');
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] triggerSFTP error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Trigger email inbox poll (admin only)
+   */
+  async triggerEmail() {
+    try {
+      const response = await apiClient.post('/intake/email/trigger');
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] triggerEmail error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get ingestion status for a document
+   * @param {string} documentId
+   */
+  async getStatus(documentId) {
+    try {
+      const response = await apiClient.get(`/intake/status/${documentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] getStatus error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * List documents in the registry (paginated)
+   * @param {Object} filters
+   */
+  async getRegistry(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (filters.page) params.append('page', filters.page);
+      if (filters.page_size) params.append('page_size', filters.page_size);
+      if (filters.source_channel) params.append('source_channel', filters.source_channel);
+      if (filters.ingestion_status) params.append('ingestion_status', filters.ingestion_status);
+
+      const response = await apiClient.get(`/intake/registry?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] getRegistry error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a document from the registry and data lake
+   * @param {string} documentId
+   */
+  async deleteDocument(documentId) {
+    try {
+      const response = await apiClient.delete(`/intake/document/${documentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] deleteDocument error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Data Lake and Kafka health check
+   */
+  async getHealth() {
+    try {
+      const response = await apiClient.get('/intake/health');
+      return response.data;
+    } catch (error) {
+      console.error('[intakeService] getHealth error:', error);
+      throw error;
+    }
+  },
+};
+
+// ============================================================================
+// ADDITIONAL DOCUMENT & ROUTE SERVICES
+// ============================================================================
+
+// Classify document type
+export const classifyService = {
+  async classifyDocument(filePath) {
+    try {
+      const response = await apiClient.post('/react/classify', { file_path: filePath });
+      return response.data;
+    } catch (error) {
+      console.error('[classifyService] classifyDocument error:', error);
+      throw error;
+    }
+  },
+};
+
+// Validation service
+export const validationService = {
+  async validateGST(gstNumber) {
+    try {
+      const response = await apiClient.post('/react/validate-gst', { gst_number: gstNumber });
+      return response.data;
+    } catch (error) {
+      console.error('[validationService] validateGST error:', error);
+      throw error;
+    }
+  },
+
+  async validateIEC(iecNumber) {
+    try {
+      const response = await apiClient.post('/react/validate-iec', { iec_number: iecNumber });
+      return response.data;
+    } catch (error) {
+      console.error('[validationService] validateIEC error:', error);
+      throw error;
+    }
+  },
+};
+
+// Bill of Entry Service (React routes)
+export const boeService = {
+  async createFromInvoice(documentId, portCode = 'INMAA1', autoValidate = true) {
+    try {
+      const response = await apiClient.post('/react/boe/create-from-invoice', {
+        document_id: documentId,
+        port_code: portCode,
+        auto_validate: autoValidate,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[boeService] createFromInvoice error:', error);
+      throw error;
+    }
+  },
+
+  async getList(status = null, limit = 20) {
+    try {
+      const params = new URLSearchParams();
+      if (status) params.append('status', status);
+      params.append('limit', limit);
+
+      const response = await apiClient.get(`/react/boe/list?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('[boeService] getList error:', error);
+      throw error;
+    }
+  },
+
+  async getById(boeId) {
+    try {
+      const response = await apiClient.get(`/react/boe/${boeId}`);
+      return response.data;
+    } catch (error) {
+      console.error('[boeService] getById error:', error);
+      throw error;
+    }
+  },
+
+  async validate(boeId) {
+    try {
+      const response = await apiClient.post(`/react/boe/${boeId}/validate`);
+      return response.data;
+    } catch (error) {
+      console.error('[boeService] validate error:', error);
+      throw error;
+    }
+  },
+
+  async export(boeId, format = 'json') {
+    try {
+      const response = await apiClient.get(`/react/boe/${boeId}/export?format=${format}`);
+      return response.data;
+    } catch (error) {
+      console.error('[boeService] export error:', error);
+      throw error;
+    }
+  },
+};
+
+// Notification service extensions
+export const notificationServiceExtensions = {
+  async adoptIntakeDocument(intakeDocumentId) {
+    try {
+      const response = await apiClient.post(`/react/adopt-intake/${intakeDocumentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('[notificationServiceExtensions] adoptIntakeDocument error:', error);
+      throw error;
+    }
+  },
+};
+
+// Document service extensions
+export const documentServiceExtensions = {
+  async getProcessedInvoices() {
+    try {
+      const response = await apiClient.get('/react/documents/processed-invoices');
+      return response.data;
+    } catch (error) {
+      console.error('[documentServiceExtensions] getProcessedInvoices error:', error);
+      throw error;
+    }
+  },
+
+  async updateDocument(documentId, updateData) {
+    try {
+      const response = await apiClient.patch(`/react/documents/${documentId}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('[documentServiceExtensions] updateDocument error:', error);
+      throw error;
+    }
+  },
+
+  async generateCustomsDeclaration(documentId) {
+    try {
+      const response = await apiClient.post('/react/generate-customs-declaration', {
+        document_id: documentId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[documentServiceExtensions] generateCustomsDeclaration error:', error);
+      throw error;
+    }
+  },
+};
+
 // Export all services
 export {
   documentService,

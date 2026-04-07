@@ -394,7 +394,7 @@ const AllFieldsDisplay = ({ data, onDownload }) => {
       {/* Line items table */}
       {hasLineItems && (
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#E8C84A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
             Line Items ({lineItems.length})
           </div>
           <div style={{ overflowX: 'auto' }}>
@@ -620,6 +620,7 @@ const DocumentPreviewModal = ({ isOpen, onClose, document, extractedData, onSave
                   <iframe
                     src={fileUrl}
                     title={document?.file?.name || 'PDF Preview'}
+                    loading="lazy"
                     width="100%"
                     height="100%"
                     style={{
@@ -633,6 +634,8 @@ const DocumentPreviewModal = ({ isOpen, onClose, document, extractedData, onSave
                   <img 
                     src={fileUrl}
                     alt={document?.file?.name}
+                    loading="lazy"
+                    decoding="async"
                     style={{
                       maxWidth: '100%',
                       maxHeight: '100%',

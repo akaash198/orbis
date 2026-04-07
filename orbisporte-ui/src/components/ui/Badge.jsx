@@ -1,38 +1,21 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { uiStyles } from './styles';
 
 const Badge = React.forwardRef(
-  ({ className, variant = 'default', dot = false, children, ...props }, ref) => {
-    const variants = {
-      default: 'bg-surface-glass border-border text-text-secondary',
-      success: 'bg-success/15 border-success/30 text-success',
-      warning: 'bg-warning/15 border-warning/30 text-warning',
-      error: 'bg-error/15 border-error/30 text-error',
-      info: 'bg-primary-500/15 border-primary-500/30 text-primary-400',
-      purple: 'bg-purple-500/15 border-purple-500/30 text-purple-400',
-    };
-
-    const dotColors = {
-      default: 'bg-text-muted',
-      success: 'bg-success',
-      warning: 'bg-warning',
-      error: 'bg-error',
-      info: 'bg-primary-400',
-      purple: 'bg-purple-400',
-    };
-
+  ({ className, variant = 'brand', dot = false, children, ...props }, ref) => {
     return (
       <span
         ref={ref}
         className={cn(
-          'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border',
-          variants[variant],
+          uiStyles.badge.base,
+          uiStyles.badge.variants[variant],
           className
         )}
         {...props}
       >
         {dot && (
-          <span className={cn('w-1.5 h-1.5 rounded-full', dotColors[variant])} />
+          <span className={cn('h-1.5 w-1.5 rounded-full', uiStyles.badge.dots[variant])} />
         )}
         {children}
       </span>

@@ -53,7 +53,7 @@ const UploadArea = styled.div`
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.08), transparent);
+    background: linear-gradient(90deg, transparent, rgba(135, 110, 18, 0.08), transparent);
     transition: left 0.5s;
   }
   

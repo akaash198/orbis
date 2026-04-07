@@ -14,7 +14,7 @@ console.log('[Sidebar] VERSION 5.0 - Dropdown support added');
 const SidebarWrapper = styled.div`
   width: ${props => props.$collapsed ? '72px' : '280px'};
   transition: all ${theme.transitions.normal} cubic-bezier(0.4, 0, 0.2, 1);
-  border-right: 1px solid rgba(59, 130, 246, 0.25);
+  border-right: 1px solid rgba(201, 165, 32, 0.25);
   height: 100%;
   background: ${theme.colors.ui.sidebar};
   backdrop-filter: blur(20px);
@@ -36,7 +36,7 @@ const SidebarWrapper = styled.div`
     right: 0;
     bottom: 0;
     background:
-      radial-gradient(ellipse at 10% 15%, rgba(59, 130, 246, 0.18) 0%, transparent 45%),
+      radial-gradient(ellipse at 10% 15%, rgba(201, 165, 32, 0.18) 0%, transparent 45%),
       radial-gradient(ellipse at 80% 40%, rgba(6, 182, 212, 0.14) 0%, transparent 40%),
       radial-gradient(ellipse at 30% 75%, rgba(139, 92, 246, 0.12) 0%, transparent 45%),
       radial-gradient(ellipse at 90% 90%, rgba(16, 185, 129, 0.10) 0%, transparent 40%);
@@ -51,7 +51,7 @@ const SidebarWrapper = styled.div`
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.6), rgba(6, 182, 212, 0.6), rgba(139, 92, 246, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(201, 165, 32, 0.6), rgba(6, 182, 212, 0.6), rgba(139, 92, 246, 0.4), transparent);
     z-index: 1;
     pointer-events: none;
   }
@@ -74,7 +74,7 @@ const SidebarHeader = styled.div`
 
   .logo {
     font-size: ${theme.typography.fontSize['3xl']};
-    filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.5));
+    filter: drop-shadow(0 4px 12px rgba(201, 165, 32, 0.5));
     margin-bottom: ${theme.spacing.sm}px;
   }
 
@@ -89,7 +89,7 @@ const SidebarHeader = styled.div`
 
 const FloatingGlobe = styled.div`
   font-size: 48px;
-  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+  filter: drop-shadow(0 0 20px rgba(201, 165, 32, 0.6));
   margin-bottom: 18px;
   display: flex;
   align-items: center;
@@ -219,7 +219,7 @@ const SubMenuItem = styled.div`
   gap: ${theme.spacing.sm}px;
   padding: 8px 16px 8px 56px;
   margin: 2px 16px;
-  background: ${props => props.$active ? 'rgba(59, 130, 246, 0.15)' : 'transparent'};
+  background: ${props => props.$active ? 'rgba(201, 165, 32, 0.15)' : 'transparent'};
   color: ${props => props.$active ? theme.colors.text.sidebarPrimary : theme.colors.text.sidebarSecondary};
   border-radius: ${theme.radius.sm}px;
   font-size: ${theme.typography.fontSize.xs};
@@ -231,7 +231,7 @@ const SubMenuItem = styled.div`
   position: relative;
 
   &:hover {
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(201, 165, 32, 0.2);
     color: ${theme.colors.text.sidebarPrimary};
     transform: translateX(3px);
   }
@@ -245,9 +245,9 @@ const CollapseButton = styled.button`
   margin: ${theme.spacing.sm}px ${theme.spacing.md}px;
   margin-bottom: ${theme.spacing.md}px;
   padding: ${theme.spacing.sm}px ${theme.spacing.md}px;
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(201, 165, 32, 0.2);
   color: ${theme.colors.text.sidebarPrimary};
-  border: 2px solid rgba(59, 130, 246, 0.4);
+  border: 2px solid rgba(201, 165, 32, 0.4);
   border-radius: ${theme.radius.lg}px;
   box-shadow: ${theme.shadows.sm};
   position: relative;
@@ -273,7 +273,7 @@ const CollapseButton = styled.button`
   }
 
   &:hover {
-    background: rgba(59, 130, 246, 0.3);
+    background: rgba(201, 165, 32, 0.3);
     border-color: ${theme.colors.primary.light};
     color: ${theme.colors.text.sidebarPrimary};
     transform: ${theme.transforms.buttonHover3D};
@@ -411,10 +411,10 @@ const Sidebar = ({ active, onSelect, collapsed, setCollapsed }) => {
                 fontSize: '26px',
                 textShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
                 lineHeight: '1.3',
-                background: 'linear-gradient(135deg, #3B82F6, #06B6D4)',
+                background: 'linear-gradient(135deg, #C9A520, #6BBCD4)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))',
+                filter: 'drop-shadow(0 0 10px rgba(201, 165, 32, 0.5))',
                 marginBottom: '4px'
               }}>
                 ORBISPORTÉ

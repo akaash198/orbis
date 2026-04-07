@@ -42,7 +42,15 @@ def login_user(db: Session, username: str, password: str):
     it was stored with a higher work factor (e.g. rounds=12 → rounds=10)
     so subsequent logins are faster without any user-facing change.
     """
-    user = UserRepository.get_by_username(db, username)
+    login_value = str(username or "").strip()
+    user = UserRepository.get_by_username(db, login_value)
+
+    # Allow the login form to accept either a username or an email address.
+    # This keeps the seeded demo account working with the email shown in the UI.
+    if not user and "@" in login_value:
+        user = UserRepository.get_by_email(db, login_value.lower())
+    elif not user:
+        user = UserRepository.get_by_email(db, login_value.lower())
 
     if not user or not user.verify_password(password):
         return None

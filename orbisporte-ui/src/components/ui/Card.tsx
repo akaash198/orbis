@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { uiStyles } from './styles';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'elevated' | 'glass';
@@ -8,21 +9,13 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', hover = false, children, ...props }, ref) => {
-    const variants = {
-      default: 'bg-surface border border-border',
-      elevated: 'bg-surface border border-border shadow-card',
-      glass: 'bg-surface-glass/50 backdrop-blur-xl border border-border-glass',
-    };
-
-    const hoverStyles = hover ? 'hover:shadow-card-hover hover:border-border-glow hover:-translate-y-0.5 transition-all duration-300' : '';
-
     return (
       <div
         ref={ref}
         className={cn(
-          'rounded-xl p-5',
-          variants[variant],
-          hoverStyles,
+          uiStyles.card.base,
+          uiStyles.card.variants[variant],
+          hover && uiStyles.card.hover,
           className
         )}
         {...props}
@@ -37,15 +30,17 @@ Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex flex-col gap-1.5 mb-4', className)} {...props} />
+    <div ref={ref} className={cn(uiStyles.card.header, className)} {...props} />
   )
 );
 
 CardHeader.displayName = 'CardHeader';
 
 const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-lg font-semibold text-text-primary', className)} {...props} />
+  ({ className, children, ...props }, ref) => (
+    <h3 ref={ref} className={cn(uiStyles.card.title, className)} {...props}>
+      {children}
+    </h3>
   )
 );
 
@@ -53,7 +48,7 @@ CardTitle.displayName = 'CardTitle';
 
 const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn('text-sm text-text-secondary', className)} {...props} />
+    <p ref={ref} className={cn(uiStyles.card.description, className)} {...props} />
   )
 );
 
@@ -61,7 +56,7 @@ CardDescription.displayName = 'CardDescription';
 
 const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('', className)} {...props} />
+    <div ref={ref} className={cn(uiStyles.card.content, className)} {...props} />
   )
 );
 
@@ -69,7 +64,7 @@ CardContent.displayName = 'CardContent';
 
 const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center gap-3 mt-4 pt-4 border-t border-border', className)} {...props} />
+    <div ref={ref} className={cn(uiStyles.card.footer, className)} {...props} />
   )
 );
 

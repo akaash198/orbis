@@ -785,7 +785,7 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll, onPageChange }) => {
               return (
                 <div key={i} style={{
                   background: i === 0 ? 'var(--t-card-elevated)' : 'var(--t-card)',
-                  border: `1px solid ${i === 0 ? 'rgba(59,130,246,0.3)' : 'var(--t-border)'}`,
+                  border: `1px solid ${i === 0 ? 'rgba(201,165,32,0.3)' : 'var(--t-border)'}`,
                   borderRadius: 8,
                   padding: '10px 14px',
                   marginBottom: 8,
@@ -925,7 +925,7 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll, onPageChange }) => {
                 const isSelected = selectedItems.has(groupIndex);
 
                 return (
-                  <tr key={groupIndex} style={{ background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent' }}>
+                  <tr key={groupIndex} style={{ background: isSelected ? 'rgba(201, 165, 32, 0.1)' : 'transparent' }}>
                     <td>
                       <input
                         type="checkbox"
@@ -1027,7 +1027,7 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll, onPageChange }) => {
         background: '#0c1222', border: '1px solid #1e3a5f',
         borderRadius: 12, padding: 24, marginBottom: 8,
       }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#60a5fa', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#E8C84A', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           ✏️ Manual HSN Code Entry
         </div>
 
@@ -1090,7 +1090,7 @@ const HSCodePanel = ({ extractedDocuments = [], onClearAll, onPageChange }) => {
                 >
                   <span style={{
                     fontFamily: 'monospace', fontWeight: 800, fontSize: 16,
-                    color: '#60a5fa', letterSpacing: '0.1em', flex: 1,
+                    color: '#E8C84A', letterSpacing: '0.1em', flex: 1,
                   }}>
                     {entry.hsn_code}
                   </span>

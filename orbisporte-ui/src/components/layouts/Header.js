@@ -18,7 +18,7 @@ const HeaderContainer = styled.div`
   padding: 0 ${theme.spacing.xxl}px;
   background: linear-gradient(160deg, #04060f 0%, #060d1f 50%, #050b18 100%);
   backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.25);
+  border-bottom: 1px solid rgba(201, 165, 32, 0.25);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -32,7 +32,7 @@ const HeaderContainer = styled.div`
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse at 0% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 0% 50%, rgba(201, 165, 32, 0.15) 0%, transparent 50%),
       radial-gradient(ellipse at 50% 0%, rgba(6, 182, 212, 0.10) 0%, transparent 50%),
       radial-gradient(ellipse at 100% 50%, rgba(139, 92, 246, 0.10) 0%, transparent 50%);
     pointer-events: none;
@@ -45,7 +45,7 @@ const HeaderContainer = styled.div`
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.6), rgba(6, 182, 212, 0.6), rgba(139, 92, 246, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(201, 165, 32, 0.6), rgba(6, 182, 212, 0.6), rgba(139, 92, 246, 0.4), transparent);
     pointer-events: none;
   }
 `;
@@ -85,7 +85,7 @@ const Title = styled.h1`
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.5));
+  filter: drop-shadow(0 0 15px rgba(201, 165, 32, 0.5));
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 `;
 

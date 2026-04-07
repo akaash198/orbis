@@ -107,7 +107,7 @@ const Card = styled.div`
   &::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(201,165,32,0.3), transparent);
     pointer-events: none;
   }
   &:hover { box-shadow: ${theme.shadows.cardHover}; transform: translateY(-4px); }
@@ -152,7 +152,7 @@ const Input = styled.input`
   font-size: ${theme.typography.fontSize.sm}px;
   transition: all ${theme.transitions.fast};
   box-sizing: border-box;
-  &:focus { outline: none; border-color: ${theme.colors.primary.main}; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+  &:focus { outline: none; border-color: ${theme.colors.primary.main}; box-shadow: 0 0 0 3px rgba(135,110,18,0.12); }
   &::placeholder { color: ${theme.colors.text.tertiary}; }
 `;
 
@@ -165,7 +165,7 @@ const Select = styled.select`
   color: ${theme.colors.text.primary};
   font-size: ${theme.typography.fontSize.sm}px;
   transition: all ${theme.transitions.fast};
-  &:focus { outline: none; border-color: ${theme.colors.primary.main}; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+  &:focus { outline: none; border-color: ${theme.colors.primary.main}; box-shadow: 0 0 0 3px rgba(135,110,18,0.12); }
 
   option {
     background: #1a2035;
@@ -253,8 +253,8 @@ const SuccessMessage = styled.div`
 `;
 
 const InfoBox = styled.div`
-  background: rgba(59,130,246,0.1);
-  border: 1px solid rgba(59,130,246,0.3);
+  background: rgba(201,165,32,0.1);
+  border: 1px solid rgba(201,165,32,0.3);
   border-radius: ${theme.radius.md}px;
   padding: ${theme.spacing.md}px;
   color: #93c5fd;
@@ -299,8 +299,8 @@ const RateTag = styled.span`
 `;
 
 const ResultCard = styled(Card)`
-  background: linear-gradient(135deg, rgba(59,130,246,0.10) 0%, rgba(99,102,241,0.10) 100%);
-  border: 1px solid rgba(59,130,246,0.25);
+  background: linear-gradient(135deg, rgba(201,165,32,0.10) 0%, rgba(99,102,241,0.10) 100%);
+  border: 1px solid rgba(201,165,32,0.25);
 `;
 
 const StepRow = styled.div`
@@ -819,8 +819,8 @@ const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
   // ── Chart data from result ────────────────────────────────────────────────
 
   const chartData = result ? [
-    { name: 'AV (INR)', value: result.assessable_value_inr, fill: '#60A5FA' },
-    { name: 'BCD', value: result.duties.bcd_amount, fill: '#3B82F6' },
+    { name: 'AV (INR)', value: result.assessable_value_inr, fill: '#E8C84A' },
+    { name: 'BCD', value: result.duties.bcd_amount, fill: '#C9A520' },
     { name: 'SWS', value: result.duties.sws_amount, fill: '#F59E0B' },
     { name: 'IGST', value: result.duties.igst_amount, fill: '#10B981' },
     result.duties.add_amount > 0
@@ -1096,7 +1096,7 @@ const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
               <ResultCard ref={resultRef}>
                 <CardHeader>
                   <CardTitle>📊 Duty Computation — SOP Breakdown</CardTitle>
-                  <Badge $color="#2563eb" style={{ fontSize: 10 }}>
+                  <Badge $color="#876E12" style={{ fontSize: 10 }}>
                     {result.computation_uuid?.slice(0, 8)}
                   </Badge>
                 </CardHeader>
@@ -1161,8 +1161,8 @@ const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
                 </SopSection>
 
                 {/* Step 3 */}
-                <SopSection $color="#3B82F6">
-                  <SopTitle $color="#3B82F6">Step 3 — Basic Customs Duty (BCD)</SopTitle>
+                <SopSection $color="#C9A520">
+                  <SopTitle $color="#C9A520">Step 3 — Basic Customs Duty (BCD)</SopTitle>
                   <StepRow>
                     <StepLabel>BCD Rate
                       {result.fta?.eligible && result.fta?.agreement_code && (
@@ -1401,7 +1401,7 @@ const DutyCalculatorPanel = ({ activeSubItem = 'duty' }) => {
 
                 <div style={{ fontSize: 11, color: 'rgba(107,114,128,1)', marginBottom: 14 }}>
                   Computation UUID:&nbsp;
-                  <code style={{ color: '#60a5fa', background: 'rgba(59,130,246,0.1)', padding: '1px 6px', borderRadius: 4 }}>
+                  <code style={{ color: '#E8C84A', background: 'rgba(201,165,32,0.1)', padding: '1px 6px', borderRadius: 4 }}>
                     {result.computation_uuid}
                   </code>
                   &nbsp;— saved to session storage

@@ -132,7 +132,7 @@ const SearchInput = styled.input`
 
   &:focus {
     border-color: ${theme.colors.primary.main};
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+    box-shadow: 0 0 0 2px rgba(201,165,32,0.15);
   }
 `;
 
@@ -200,11 +200,11 @@ const Table = styled.table`
 `;
 
 const THead = styled.thead`
-  background: rgba(59,130,246,0.07);
+  background: rgba(201,165,32,0.07);
   border-bottom: 1px solid ${theme.colors.ui.border};
 
   [data-theme="light"] & {
-    background: rgba(59,130,246,0.08);
+    background: rgba(201,165,32,0.08);
   }
 `;
 
@@ -296,9 +296,9 @@ const StageDivider = styled.span`
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
 const statusConfig = {
-  uploaded:   { bg: 'rgba(59,130,246,0.15)',  color: '#60A5FA',  colorLight: '#1d4ed8', label: 'Uploaded'   },
+  uploaded:   { bg: 'rgba(201,165,32,0.15)',  color: '#E8C84A',  colorLight: '#1d4ed8', label: 'Uploaded'   },
   classified: { bg: 'rgba(124,58,237,0.15)',  color: '#a78bfa',  colorLight: '#6d28d9', label: 'Classified' },
-  extracted:  { bg: 'rgba(6,182,212,0.15)',   color: '#22d3ee',  colorLight: '#0e7490', label: 'Extracted'  },
+  extracted:  { bg: 'rgba(107,188,212,0.15)',   color: '#8DD4EC',  colorLight: '#0e7490', label: 'Extracted'  },
   processed:  { bg: 'rgba(16,185,129,0.15)',  color: '#34d399',  colorLight: '#065f46', label: 'Processed'  },
   failed:     { bg: 'rgba(239,68,68,0.15)',   color: '#f87171',  colorLight: '#b91c1c', label: 'Failed'     },
   pending:    { bg: 'rgba(245,158,11,0.15)',  color: '#fbbf24',  colorLight: '#92400e', label: 'Pending'    },
@@ -334,15 +334,15 @@ const ActionBtn = styled.button`
   border: 1px solid ${({ $variant }) =>
     $variant === 'danger'  ? 'rgba(239,68,68,0.4)'  :
     $variant === 'warning' ? 'rgba(245,158,11,0.4)' :
-    'rgba(59,130,246,0.4)'};
+    'rgba(201,165,32,0.4)'};
   background: ${({ $variant }) =>
     $variant === 'danger'  ? 'rgba(239,68,68,0.12)'  :
     $variant === 'warning' ? 'rgba(245,158,11,0.12)' :
-    'rgba(59,130,246,0.12)'};
+    'rgba(201,165,32,0.12)'};
   color: ${({ $variant }) =>
     $variant === 'danger'  ? '#f87171' :
     $variant === 'warning' ? '#fbbf24' :
-    '#60A5FA'};
+    '#E8C84A'};
   font-size: 12px;
   font-weight: ${theme.typography.fontWeight.semibold};
   cursor: pointer;
@@ -368,11 +368,11 @@ const ActionBtn = styled.button`
     border-color: ${({ $variant }) =>
       $variant === 'danger'  ? 'rgba(185,28,28,0.4)'  :
       $variant === 'warning' ? 'rgba(146,64,14,0.4)'  :
-      'rgba(29,78,216,0.4)'};
+      'rgba(201,165,32,0.4)'};
     background: ${({ $variant }) =>
       $variant === 'danger'  ? 'rgba(185,28,28,0.08)'  :
       $variant === 'warning' ? 'rgba(146,64,14,0.08)'  :
-      'rgba(29,78,216,0.08)'};
+      'rgba(201,165,32,0.08)'};
   }
 `;
 
@@ -397,7 +397,7 @@ const SpinnerWrap = styled.div`
 const Spinner = styled.div`
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(59,130,246,0.2);
+  border: 3px solid rgba(201,165,32,0.2);
   border-top-color: ${theme.colors.primary.main};
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
@@ -565,12 +565,12 @@ const Section = styled.div`
 const SectionTitle = styled.h4`
   font-size: ${theme.typography.fontSize.xs};
   font-weight: ${theme.typography.fontWeight.semibold};
-  color: #60a5fa;
+  color: #E8C84A;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin: 0 0 ${theme.spacing.md}px 0;
 
-  [data-theme="light"] & { color: #2563eb; }
+  [data-theme="light"] & { color: #876E12; }
 `;
 
 const Grid2 = styled.div`
@@ -670,7 +670,7 @@ const PageBtn = styled.button`
   padding: 4px 10px;
   border-radius: ${theme.radius.sm}px;
   border: 1px solid ${({ $active }) => $active ? theme.colors.primary.main : theme.colors.ui.border};
-  background: ${({ $active }) => $active ? 'rgba(59,130,246,0.2)' : 'transparent'};
+  background: ${({ $active }) => $active ? 'rgba(201,165,32,0.2)' : 'transparent'};
   color: ${({ $active }) => $active ? theme.colors.primary.main : theme.colors.text.primary};
   font-size: ${theme.typography.fontSize.sm};
   font-weight: ${({ $active }) => $active ? theme.typography.fontWeight.semibold : theme.typography.fontWeight.regular};
@@ -866,14 +866,14 @@ const HistoryReportsPanel = () => {
       {/* Stats */}
       <StatsRow>
         <StatCard>
-          <StatIcon $color="linear-gradient(135deg,#3B82F6 0%,#06B6D4 100%)">📄</StatIcon>
+          <StatIcon $color="linear-gradient(135deg,#C9A520 0%,#6BBCD4 100%)">📄</StatIcon>
           <StatInfo>
             <div className="value">{stats.total}</div>
             <div className="label">Total Documents</div>
           </StatInfo>
         </StatCard>
         <StatCard>
-          <StatIcon $color="linear-gradient(135deg,#06B6D4 0%,#22d3ee 100%)">🔬</StatIcon>
+          <StatIcon $color="linear-gradient(135deg,#6BBCD4 0%,#8DD4EC 100%)">🔬</StatIcon>
           <StatInfo>
             <div className="value">{stats.extracted}</div>
             <div className="label">Data Extracted</div>

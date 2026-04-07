@@ -1,13 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { loginUser, logoutUser } from './store/authSlice';
+import { loginUser, logoutUser, signupUser } from './store/authSlice';
 import { Layout } from './components/layout/Layout';
-import { Dashboard } from './components/features/Dashboard';
-import { DocumentUpload } from './components/features/DocumentUpload';
 import { Card, CardHeader, CardTitle, CardContent } from './components/ui/Card';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
 import { Badge } from './components/ui/Badge';
+import { ToastProvider, useToast } from './components/ui';
+import AuthFlow from './components/auth/AuthFlow';
+
+const Dashboard = lazy(() =>
+  import('./components/features/Dashboard').then((module) => ({ default: module.Dashboard }))
+);
+
+const DocumentUpload = lazy(() =>
+  import('./components/features/DocumentUpload').then((module) => ({ default: module.DocumentUpload }))
+);
+
+const FeaturePage = lazy(() =>
+  import('./components/features/FeaturePage').then((module) => ({ default: module.FeaturePage }))
+);
 
 function LoginScreen({ onLogin, onSwitchToSignup }) {
   const [email, setEmail] = useState('');
@@ -187,12 +199,18 @@ function SignupScreen({ onSignup, onBack }) {
   );
 }
 
+void LoginScreen;
+void SignupScreen;
+
 function PlaceholderPage({ title, description }) {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">{title}</h1>
-        <p className="text-text-secondary mt-1">{description}</p>
+      <div className="flex items-center gap-2">
+        <Badge variant="info">Coming Soon</Badge>
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">{title}</h1>
+          <p className="text-text-secondary mt-1">{description}</p>
+        </div>
       </div>
       <Card>
         <CardContent className="py-12 text-center">
@@ -207,30 +225,99 @@ function PlaceholderPage({ title, description }) {
   );
 }
 
-function App() {
+function PageLoadingState({ label }) {
+  return (
+    <Card className="animate-pulse" role="status" aria-live="polite" aria-label={label}>
+      <CardHeader>
+        <CardTitle>{label}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="h-4 w-1/2 rounded bg-surface-subtle" />
+        <div className="h-4 w-3/4 rounded bg-surface-subtle" />
+        <div className="h-32 rounded-2xl bg-surface-subtle" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function AppContent() {
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [activePage, setActivePage] = useState('dashboard');
-  const [authMode, setAuthMode] = useState('login');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return undefined;
+    }
+
+    const prefetch = () => {
+      void import('./components/features/Dashboard');
+      void import('./components/features/DocumentUpload');
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const handle = window.requestIdleCallback(prefetch, { timeout: 1500 });
+      return () => window.cancelIdleCallback(handle);
+    }
+
+    const timer = window.setTimeout(prefetch, 300);
+    return () => window.clearTimeout(timer);
+  }, [isAuthenticated]);
 
   const handleLogin = async (credentials) => {
     try {
       await dispatch(loginUser(credentials)).unwrap();
+      toast({
+        title: 'Signed in',
+        description: 'Your session is ready.',
+        variant: 'success',
+      });
+      if (typeof window !== 'undefined') {
+        window.history.pushState({}, '', '/');
+      }
     } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: error.message || 'Please check your credentials and try again.',
+        variant: 'error',
+        duration: 7000,
+      });
       throw error;
     }
   };
 
   const handleSignup = async (formData) => {
     try {
-      setAuthMode('login');
+      await dispatch(signupUser(formData)).unwrap();
+      toast({
+        title: 'Account ready',
+        description: 'Your account is ready to use.',
+        variant: 'success',
+      });
+      if (typeof window !== 'undefined') {
+        window.history.pushState({}, '', '/');
+      }
     } catch (error) {
+      toast({
+        title: 'Signup failed',
+        description: error.message || 'Please check the form and try again.',
+        variant: 'error',
+      });
       throw error;
     }
   };
 
   const handleLogout = () => {
     dispatch(logoutUser());
+    toast({
+      title: 'Signed out',
+      description: 'Your session has been closed.',
+      variant: 'default',
+    });
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', '/auth/login');
+    }
   };
 
   const renderPage = () => {
@@ -241,54 +328,19 @@ function App() {
       case 'documents-upload':
         return <DocumentUpload onNavigate={setActivePage} />;
       case 'hs-codes':
-        return (
-          <PlaceholderPage 
-            title="HS Code Lookup" 
-            description="AI-powered HS code classification and search"
-          />
-        );
+        return <FeaturePage pageId="hs-codes" />;
       case 'duty-calculator':
-        return (
-          <PlaceholderPage 
-            title="Duty Calculator" 
-            description="Calculate import duties and taxes"
-          />
-        );
+        return <FeaturePage pageId="duty-calculator" />;
       case 'boe-filing':
-        return (
-          <PlaceholderPage 
-            title="BoE Filing" 
-            description="File Bill of Entry to ICEGATE"
-          />
-        );
+        return <FeaturePage pageId="boe-filing" />;
       case 'shipment-tracking':
-        return (
-          <PlaceholderPage 
-            title="Shipment Tracking" 
-            description="Real-time shipment monitoring"
-          />
-        );
+        return <FeaturePage pageId="shipment-tracking" />;
       case 'fraud-detection':
-        return (
-          <PlaceholderPage 
-            title="Fraud Detection" 
-            description="AI-powered anomaly detection"
-          />
-        );
+        return <FeaturePage pageId="fraud-detection" />;
       case 'risk-scoring':
-        return (
-          <PlaceholderPage 
-            title="Risk Scoring" 
-            description="Shipment risk assessment"
-          />
-        );
+        return <FeaturePage pageId="risk-scoring" />;
       case 'compliance':
-        return (
-          <PlaceholderPage 
-            title="Compliance" 
-            description="Regulatory compliance checking"
-          />
-        );
+        return <FeaturePage pageId="compliance" />;
       case 'ai-governance':
         return (
           <PlaceholderPage 
@@ -301,6 +353,13 @@ function App() {
           <PlaceholderPage 
             title="Alerts" 
             description="Customs and duty alerts"
+          />
+        );
+      case 'notifications':
+        return (
+          <PlaceholderPage
+            title="Notification Tracking"
+            description="Track customs notices and rate updates"
           />
         );
       case 'qa':
@@ -323,20 +382,7 @@ function App() {
   };
 
   if (!isAuthenticated) {
-    if (authMode === 'login') {
-      return (
-        <LoginScreen 
-          onLogin={handleLogin} 
-          onSwitchToSignup={() => setAuthMode('signup')}
-        />
-      );
-    }
-    return (
-      <SignupScreen 
-        onSignup={handleSignup} 
-        onBack={() => setAuthMode('login')}
-      />
-    );
+    return <AuthFlow onLogin={handleLogin} onSignup={handleSignup} toast={toast} />;
   }
 
   return (
@@ -346,8 +392,18 @@ function App() {
       user={user}
       onLogout={handleLogout}
     >
-      {renderPage()}
+      <Suspense fallback={<PageLoadingState label="Loading page" />}>
+        {renderPage()}
+      </Suspense>
     </Layout>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
 

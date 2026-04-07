@@ -1,0 +1,210 @@
+# ============================================
+# Orbisporte Docker Compose
+# ============================================
+# AI-Powered Indian Customs Document Processing Platform
+# Company: SPECTRA AI PTE. LTD., Singapore
+# Version: 1.0.0
+
+services:
+  # ── Database (PostgreSQL) ──────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: orbisporte-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-orbisporte}
+      POSTGRES_USER: ${POSTGRES_USER:-orbisporte}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orbisporte_secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orbisporte} -d ${POSTGRES_DB:-orbisporte}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - orbisporte-network
+
+  # ── Vector Database (pgvector) ──────────────────────────────────────
+  # Note: For production, you may use a separate pgvector instance
+  # or enable the extension in the main postgres container
+  pgvector-init:
+    image: pgvector/pgvector:pg15
+    container_name: orbisporte-pgvector-init
+    restart: "no"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-orbisporte}
+      POSTGRES_USER: ${POSTGRES_USER:-orbisporte}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orbisporte_secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    entrypoint: ["bash", "-c"]
+    command: |
+      "echo 'Waiting for postgres...' && \
+       until pg_isready -h postgres -U ${POSTGRES_USER:-orbisporte}; do sleep 2; done && \
+       psql -h postgres -U ${POSTGRES_USER:-orbisporte} -d ${POSTGRES_DB:-orbisporte} -c \"CREATE EXTENSION IF NOT EXISTS vector;\" && \
+       echo 'pgvector extension enabled'"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - orbisporte-network
+
+  # ── Redis (for caching & session management) ─────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: orbisporte-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secure_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secure_password}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - orbisporte-network
+
+  # ── Backend API ──────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: orbisporte-backend
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-orbisporte}:${POSTGRES_PASSWORD:-orbisporte_secure_password}@postgres:5432/${POSTGRES_DB:-orbisporte}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-orbisporte}
+      POSTGRES_USER: ${POSTGRES_USER:-orbisporte}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orbisporte_secure_password}
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secure_password}
+      
+      # Security
+      SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-change-in-production}
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      
+      # CORS
+      CORS_ORIGINS: "${CORS_ORIGINS:-*}"
+      
+      # AI/LLM Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      
+      # File Storage
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE: 52428800  # 50MB
+      
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      
+      # Kafka (optional - for async processing)
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-}
+      KAFKA_ENABLED: ${KAFKA_ENABLED:-false}
+      
+      # Data Lake (optional - S3 compatible)
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:-orbisporte-data-lake}
+      DATA_LAKE_TYPE: ${DATA_LAKE_TYPE:-local}
+      
+      # Application
+      HOST: 0.0.0.0
+      PORT: 8000
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      - ./backend/data:/app/data
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - orbisporte-network
+
+  # ── Frontend (Nginx) ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./orbisporte-ui
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${API_URL:-http://localhost:8000}
+        REACT_APP_API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
+    container_name: orbisporte-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+    networks:
+      - orbisporte-network
+
+  # ── Celery Worker (optional - for async tasks) ───────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: orbisporte-celery
+    restart: unless-stopped
+    command: celery -A Orbisporte.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-orbisporte}:${POSTGRES_PASSWORD:-orbisporte_secure_password}@postgres:5432/${POSTGRES_DB:-orbisporte}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secure_password}
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redis_secure_password}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redis_secure_password}@redis:6379/1
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - orbisporte-network
+    profiles:
+      - celery  # Only starts with: docker-compose --profile celery up
+
+# ── Volumes ─────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ── Networks ────────────────────────────────────────────────────────
+networks:
+  orbisporte-network:
+    driver: bridge
+    name: orbisporte-network

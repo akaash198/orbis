@@ -1,0 +1,68 @@
+- generic [ref=e4]:
+  - complementary [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - img [ref=e9]
+          - text: Premium auth experience
+        - generic [ref=e12]:
+          - img [ref=e14]
+          - generic [ref=e19]:
+            - heading "Secure access to the customs control tower." [level=1] [ref=e20]
+            - paragraph [ref=e21]: A focused, split-screen onboarding flow for trade teams, compliance operators, and platform administrators.
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - img [ref=e24]
+            - text: Real-time compliance
+          - generic [ref=e27]:
+            - img [ref=e28]
+            - text: AI-powered insights
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - text: Risk-managed workflows
+          - generic [ref=e35]:
+            - img [ref=e36]
+            - text: 24/7 shipment tracking
+      - generic [ref=e39]: © 2024 OrbisportéBuilt for enterprise customs operations
+  - main [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - img [ref=e44]
+        - generic [ref=e49]:
+          - paragraph [ref=e50]: Orbisporté
+          - paragraph [ref=e51]: Trade operations platform
+      - generic [ref=e53]:
+        - generic [ref=e54]:
+          - text: Secure onboarding
+          - generic [ref=e55]:
+            - heading "Sign in to your account" [level=2] [ref=e56]
+            - paragraph [ref=e57]: Use your username or the email address tied to your Orbisporté workspace.
+        - generic [ref=e58]:
+          - generic [ref=e59]:
+            - text: Username or Email
+            - textbox "Username or Email" [ref=e61]:
+              - /placeholder: testuser or your@company.com
+            - paragraph [ref=e62]: You can sign in with either your username or email address.
+          - generic [ref=e63]:
+            - generic [ref=e64]: Password*
+            - generic [ref=e65]:
+              - textbox "••••••••••••" [ref=e68]
+              - button "Show password" [ref=e69] [cursor=pointer]:
+                - img [ref=e70]
+          - generic [ref=e73]:
+            - generic [ref=e74]:
+              - generic [ref=e75]:
+                - checkbox "Remember me" [ref=e76]
+                - img [ref=e77]
+              - generic [ref=e79]: Remember me
+            - button "Forgot password?" [ref=e80] [cursor=pointer]
+          - button "Sign In" [ref=e81] [cursor=pointer]
+          - button "Don't have an account? Create one" [ref=e82] [cursor=pointer]:
+            - text: Don't have an account? Create one
+            - img [ref=e83]
+        - generic [ref=e85]:
+          - link "Terms of Service" [ref=e86] [cursor=pointer]:
+            - /url: /terms
+          - text: •
+          - link "Privacy Policy" [ref=e87] [cursor=pointer]:
+            - /url: /privacy

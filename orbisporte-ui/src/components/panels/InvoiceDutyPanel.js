@@ -66,7 +66,7 @@ const Card = styled.div`
     height: 2px;
     background: linear-gradient(90deg,
       transparent,
-      rgba(59, 130, 246, 0.3),
+      rgba(201, 165, 32, 0.3),
       transparent
     );
     pointer-events: none;

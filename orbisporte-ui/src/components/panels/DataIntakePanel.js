@@ -25,7 +25,7 @@ const Panel = styled.div`
 const Title = styled.h2`
   font-size: 1.6rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+  background: linear-gradient(135deg, #C9A520 0%, #6BBCD4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0 0 6px;
@@ -54,7 +54,7 @@ const Card = styled.div`
   transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
 
   &:hover {
-    border-color: rgba(59, 130, 246, 0.4);
+    border-color: rgba(201, 165, 32, 0.4);
     box-shadow: var(--t-card-shadow-hov);
   }
 `;
@@ -70,7 +70,7 @@ const ChannelIcon = styled.div`
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  background: ${p => p.gradient || 'linear-gradient(135deg, #3B82F6, #06B6D4)'};
+  background: ${p => p.gradient || 'linear-gradient(135deg, #C9A520, #6BBCD4)'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,18 +90,18 @@ const ChannelDesc = styled.div`
 `;
 
 const DropZone = styled.div`
-  border: 2px dashed ${p => p.dragging ? '#3B82F6' : 'rgba(59,130,246,0.3)'};
+  border: 2px dashed ${p => p.dragging ? '#C9A520' : 'rgba(201,165,32,0.3)'};
   border-radius: 10px;
   padding: 22px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
-  background: ${p => p.dragging ? 'rgba(59,130,246,0.06)' : 'transparent'};
+  background: ${p => p.dragging ? 'rgba(201,165,32,0.06)' : 'transparent'};
   color: var(--t-text-sub);
   font-size: 0.85rem;
 
   &:hover {
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: rgba(201, 165, 32, 0.5);
     color: var(--t-text);
   }
 `;
@@ -118,7 +118,7 @@ const Input = styled.input`
   outline: none;
   margin-bottom: 10px;
 
-  &:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); background: var(--t-input-bg-focus); }
+  &:focus { border-color: #C9A520; box-shadow: 0 0 0 3px rgba(201,165,32,0.2); background: var(--t-input-bg-focus); }
   &::placeholder { color: var(--t-text-hint); }
 `;
 
@@ -136,7 +136,7 @@ const Textarea = styled.textarea`
   min-height: 80px;
   font-family: inherit;
 
-  &:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); background: var(--t-input-bg-focus); }
+  &:focus { border-color: #C9A520; box-shadow: 0 0 0 3px rgba(201,165,32,0.2); background: var(--t-input-bg-focus); }
   &::placeholder { color: var(--t-text-hint); }
 `;
 
@@ -149,8 +149,8 @@ const Btn = styled.button`
   font-weight: 600;
   transition: all 0.2s;
   background: ${p => p.variant === 'secondary'
-    ? 'rgba(59,130,246,0.1)'
-    : 'linear-gradient(135deg, #3B82F6, #2563EB)'};
+    ? 'rgba(201,165,32,0.1)'
+    : 'linear-gradient(135deg, #C9A520, #876E12)'};
   color: ${p => p.variant === 'secondary' ? 'var(--t-btn-color)' : '#fff'};
   width: ${p => p.fullWidth ? '100%' : 'auto'};
 
@@ -168,14 +168,14 @@ const StatusBadge = styled.span`
   font-size: 0.75rem;
   font-weight: 600;
   background: ${p => ({
-    registered:        'rgba(59,130,246,0.15)',
+    registered:        'rgba(201,165,32,0.15)',
     stored:            'rgba(16,185,129,0.15)',
     validation_failed: 'rgba(239,68,68,0.15)',
     preprocessed:      'rgba(245,158,11,0.15)',
     classified:        'rgba(124,58,237,0.15)',
   }[p.status] || 'var(--t-glass)')};
   color: ${p => ({
-    registered:        '#60a5fa',
+    registered:        '#E8C84A',
     stored:            '#34d399',
     validation_failed: '#f87171',
     preprocessed:      '#fbbf24',
@@ -185,8 +185,8 @@ const StatusBadge = styled.span`
 
 const Spinner = styled.div`
   width: 20px; height: 20px;
-  border: 2px solid rgba(59,130,246,0.2);
-  border-top-color: #3B82F6;
+  border: 2px solid rgba(201,165,32,0.2);
+  border-top-color: #C9A520;
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
   display: inline-block;
@@ -229,7 +229,7 @@ const TableHeader = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1.2fr 1fr 1fr 1.4fr;
   padding: 12px 18px;
-  background: rgba(59,130,246,0.12);
+  background: rgba(201,165,32,0.12);
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--t-btn-color);
@@ -251,13 +251,13 @@ const TableRow = styled.div`
 const ViewBtn = styled.button`
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(59,130,246,0.3);
-  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(201,165,32,0.3);
+  background: rgba(201,165,32,0.1);
   color: var(--t-btn-color);
   font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s;
-  &:hover { background: rgba(37,99,235,0.15); border-color: rgba(37,99,235,0.5); }
+  &:hover { background: rgba(135,110,18,0.15); border-color: rgba(135,110,18,0.5); }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 `;
 
@@ -350,7 +350,7 @@ const StepDot = styled.div`
   display: flex; align-items: center; justify-content: center;
   font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
   background: ${p => p.done ? 'linear-gradient(135deg,#10B981,#059669)'
-               : p.active ? 'linear-gradient(135deg,#3B82F6,#06B6D4)'
+               : p.active ? 'linear-gradient(135deg,#C9A520,#6BBCD4)'
                : 'rgba(100,116,139,0.2)'};
   color: ${p => (p.done || p.active) ? '#fff' : 'var(--t-text-sub)'};
   transition: background 0.4s;
@@ -376,7 +376,7 @@ const StepLabel = styled.div`
 
 const PulsingDot = styled.div`
   width: 8px; height: 8px; border-radius: 50%;
-  background: #3B82F6;
+  background: #C9A520;
   animation: ${pulse} 1.2s ease-in-out infinite;
   display: inline-block; margin-right: 6px; vertical-align: middle;
 `;
@@ -523,7 +523,7 @@ const CHANNELS = [
     id: 'portal',
     name: 'Web Portal Upload',
     icon: '📂',
-    gradient: 'linear-gradient(135deg,#3B82F6,#06B6D4)',
+    gradient: 'linear-gradient(135deg,#C9A520,#6BBCD4)',
     desc: 'Drag & drop or click — PDF, JPEG, PNG, TIFF, XML, JSON · max 50 MB',
     type: 'file',
     accept: '.pdf,.jpg,.jpeg,.png,.tiff,.tif,.xml,.json',
@@ -765,7 +765,7 @@ function AdminTriggerCard() {
 // ── Document view modal ───────────────────────────────────────────────────────
 const ViewModalBox = styled.div`
   background: var(--t-card);
-  border: 1px solid rgba(59,130,246,0.3);
+  border: 1px solid rgba(201,165,32,0.3);
   border-radius: 14px;
   padding: 28px 32px;
   max-width: 560px; width: 95%;
@@ -808,10 +808,10 @@ function DocumentViewModal({ doc, data, loading, onClose }) {
                   </span>
                 : <span style={{ color: '#34D399' }}>No</span>],
               ['Raw Lake Path',  data.raw_lake_path
-                ? <code style={{ fontSize: '0.72rem', color: '#2563eb', wordBreak: 'break-all' }}>{data.raw_lake_path}</code>
+                ? <code style={{ fontSize: '0.72rem', color: '#876E12', wordBreak: 'break-all' }}>{data.raw_lake_path}</code>
                 : '—'],
               ['Processed Path', data.processed_lake_path
-                ? <code style={{ fontSize: '0.72rem', color: '#2563eb', wordBreak: 'break-all' }}>{data.processed_lake_path}</code>
+                ? <code style={{ fontSize: '0.72rem', color: '#876E12', wordBreak: 'break-all' }}>{data.processed_lake_path}</code>
                 : '—'],
               ['Registered At',  data.created_at ? new Date(data.created_at).toLocaleString() : '—'],
               ['Processed At',   data.processed_at ? new Date(data.processed_at).toLocaleString() : '—'],
@@ -1119,7 +1119,7 @@ function RegistryViewer() {
                   </span>
                 )}
               </div>
-              <div style={{ color: '#2563eb' }}>{row.source_channel}</div>
+              <div style={{ color: '#876E12' }}>{row.source_channel}</div>
               <div>{row.file_type || '—'}</div>
               <div style={{ color: 'var(--t-text-sub)', fontSize: '0.78rem' }}>
                 {formatDocType(row.document_type)}

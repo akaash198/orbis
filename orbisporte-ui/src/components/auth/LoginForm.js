@@ -41,27 +41,27 @@ const shimmer = keyframes`
 
 const glowPulse = keyframes`
   0%, 100% {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6),
+    box-shadow: 0 0 30px rgba(201, 165, 32, 0.6),
                 0 0 60px rgba(139, 92, 246, 0.4),
-                inset 0 0 30px rgba(59, 130, 246, 0.3);
+                inset 0 0 30px rgba(201, 165, 32, 0.3);
   }
   50% {
-    box-shadow: 0 0 50px rgba(59, 130, 246, 0.9),
+    box-shadow: 0 0 50px rgba(201, 165, 32, 0.9),
                 0 0 100px rgba(139, 92, 246, 0.6),
-                inset 0 0 50px rgba(59, 130, 246, 0.5);
+                inset 0 0 50px rgba(201, 165, 32, 0.5);
   }
 `;
 
 const LoginCard = styled.div`
   background: rgba(10, 14, 39, 0.95);
   backdrop-filter: blur(30px);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(201, 165, 32, 0.3);
   border-radius: ${theme.radius.xxl}px;
   padding: ${theme.spacing.xxl * 1.5}px;
   box-shadow:
     0 20px 80px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(59, 130, 246, 0.1),
-    0 0 60px rgba(59, 130, 246, 0.2);
+    0 0 0 1px rgba(201, 165, 32, 0.1),
+    0 0 60px rgba(201, 165, 32, 0.2);
   width: 100%;
   max-width: 450px;
   position: relative;
@@ -77,7 +77,7 @@ const LoginCard = styled.div`
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #3B82F6, #06B6D4, #8B5CF6, #3B82F6);
+    background: linear-gradient(90deg, #C9A520, #6BBCD4, #8B5CF6, #C9A520);
     background-size: 200% auto;
     animation: ${shimmer} 3s linear infinite;
   }
@@ -89,7 +89,7 @@ const LoginCard = styled.div`
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
+    background: radial-gradient(circle, rgba(201, 165, 32, 0.1) 0%, transparent 60%);
     opacity: 0;
     transition: opacity 0.5s ease;
     pointer-events: none;
@@ -98,11 +98,11 @@ const LoginCard = styled.div`
   &:hover {
     box-shadow:
       0 30px 120px rgba(0, 0, 0, 0.6),
-      0 0 0 1px rgba(59, 130, 246, 0.3),
-      0 0 100px rgba(59, 130, 246, 0.4),
-      inset 0 0 60px rgba(59, 130, 246, 0.05);
+      0 0 0 1px rgba(201, 165, 32, 0.3),
+      0 0 100px rgba(201, 165, 32, 0.4),
+      inset 0 0 60px rgba(201, 165, 32, 0.05);
     transform: translateY(-8px) rotateX(2deg);
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: rgba(201, 165, 32, 0.5);
 
     &::after {
       opacity: 1;
@@ -122,14 +122,14 @@ const LoginHeader = styled.div`
   h1 {
     font-size: ${theme.typography.fontSize['2xl']};
     font-weight: ${theme.typography.fontWeight.bold};
-    background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #8B5CF6 100%);
+    background: linear-gradient(135deg, #C9A520 0%, #6BBCD4 50%, #8B5CF6 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0 0 ${theme.spacing.sm}px 0;
     animation: ${shimmer} 3s linear infinite;
-    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+    filter: drop-shadow(0 0 20px rgba(201, 165, 32, 0.5));
   }
 
   p {
@@ -153,7 +153,7 @@ const Globe3D = styled.div`
   height: 100px;
   position: relative;
   animation: ${float} 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.8));
+  filter: drop-shadow(0 0 30px rgba(201, 165, 32, 0.8));
 
   &::before {
     content: '';
@@ -163,7 +163,7 @@ const Globe3D = styled.div`
     right: -20px;
     bottom: -20px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.2) 50%, transparent 70%);
+    background: radial-gradient(circle, rgba(201, 165, 32, 0.4) 0%, rgba(139, 92, 246, 0.2) 50%, transparent 70%);
     animation: ${glowPulse} 3s ease-in-out infinite;
     z-index: -1;
   }
@@ -176,15 +176,15 @@ const GlobeInner = styled.div`
   position: relative;
   background: radial-gradient(circle at 35% 35%,
     rgba(100, 200, 255, 1) 0%,
-    rgba(59, 130, 246, 1) 40%,
-    rgba(37, 99, 235, 1) 70%,
-    rgba(29, 78, 216, 1) 100%);
-  border: 3px solid rgba(59, 130, 246, 1);
+    rgba(201, 165, 32, 1) 40%,
+    rgba(135, 110, 18, 1) 70%,
+    rgba(201, 165, 32, 1) 100%);
+  border: 3px solid rgba(201, 165, 32, 1);
   box-shadow:
-    0 0 40px rgba(59, 130, 246, 1),
-    0 0 80px rgba(59, 130, 246, 0.6),
+    0 0 40px rgba(201, 165, 32, 1),
+    0 0 80px rgba(201, 165, 32, 0.6),
     0 0 120px rgba(139, 92, 246, 0.4),
-    inset 0 0 30px rgba(59, 130, 246, 0.4),
+    inset 0 0 30px rgba(201, 165, 32, 0.4),
     inset 15px 15px 30px rgba(255, 255, 255, 0.4),
     inset -15px -15px 30px rgba(0, 0, 0, 0.6);
   overflow: visible;
@@ -213,11 +213,11 @@ const GlobeMeridian = styled.div`
   left: 50%;
   width: 100%;
   height: 100%;
-  border: 2px solid rgba(59, 130, 246, 0.4);
+  border: 2px solid rgba(201, 165, 32, 0.4);
   border-radius: 50%;
   transform: translateX(-50%) rotateY(${props => props.$rotation}deg);
   animation: ${rotate} ${props => props.$speed}s linear infinite;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 10px rgba(201, 165, 32, 0.3);
 `;
 
 const GlobeLatitude = styled.div`
@@ -227,15 +227,15 @@ const GlobeLatitude = styled.div`
   height: 2px;
   background: linear-gradient(to right,
     transparent 0%,
-    rgba(59, 130, 246, 0.4) 10%,
-    rgba(59, 130, 246, 0.8) 50%,
-    rgba(59, 130, 246, 0.4) 90%,
+    rgba(201, 165, 32, 0.4) 10%,
+    rgba(201, 165, 32, 0.8) 50%,
+    rgba(201, 165, 32, 0.4) 90%,
     transparent 100%);
   transform: translateX(-50%);
   top: ${props => props.$position}%;
   opacity: ${props => props.$opacity || 0.7};
   z-index: 1;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 8px rgba(201, 165, 32, 0.4);
 `;
 
 const GlobeRotating = styled.div`
@@ -262,7 +262,7 @@ const GlobeRing = styled.div`
   transform: translate(-50%, -50%) rotateX(75deg);
   width: 85%;
   height: 85%;
-  border: 2px solid rgba(59, 130, 246, 0.5);
+  border: 2px solid rgba(201, 165, 32, 0.5);
   border-radius: 50%;
   opacity: 0.7;
   animation: ${pulse} 3s ease-in-out infinite;
@@ -289,7 +289,7 @@ const FormGroup = styled.div`
 
   input {
     padding: ${theme.spacing.md + 2}px ${theme.spacing.md}px;
-    border: 2px solid rgba(59, 130, 246, 0.3);
+    border: 2px solid rgba(201, 165, 32, 0.3);
     border-radius: ${theme.radius.lg}px;
     font-size: ${theme.typography.fontSize.md};
     background: var(--t-input-bg);
@@ -303,8 +303,8 @@ const FormGroup = styled.div`
       border-color: ${theme.colors.primary.main};
       background: var(--t-input-bg-focus);
       box-shadow:
-        0 0 0 4px rgba(59, 130, 246, 0.15),
-        0 8px 25px rgba(59, 130, 246, 0.3);
+        0 0 0 4px rgba(201, 165, 32, 0.15),
+        0 8px 25px rgba(201, 165, 32, 0.3);
       transform: translateY(-2px);
     }
 
@@ -315,7 +315,7 @@ const FormGroup = styled.div`
 `;
 
 const Button = styled.button`
-  background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #C9A520 0%, #6BBCD4 50%, #8B5CF6 100%);
   background-size: 200% auto;
   color: #ffffff;
   border: none;
@@ -326,7 +326,7 @@ const Button = styled.button`
   cursor: pointer;
   transition: all ${theme.transitions.normal};
   box-shadow:
-    0 8px 25px rgba(59, 130, 246, 0.4),
+    0 8px 25px rgba(201, 165, 32, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
@@ -348,7 +348,7 @@ const Button = styled.button`
   &:hover {
     transform: translateY(-3px);
     box-shadow:
-      0 15px 40px rgba(59, 130, 246, 0.5),
+      0 15px 40px rgba(201, 165, 32, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.2);
     animation: ${shimmer} 1.5s linear infinite;
 
@@ -411,7 +411,7 @@ const SwitchForm = styled.div`
   button {
     background: none;
     border: none;
-    color: #3B82F6;
+    color: #C9A520;
     font-size: ${theme.typography.fontSize.sm};
     font-weight: ${theme.typography.fontWeight.bold};
     cursor: pointer;
@@ -427,13 +427,13 @@ const SwitchForm = styled.div`
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, #3B82F6, #06B6D4);
+      background: linear-gradient(90deg, #C9A520, #6BBCD4);
       transform: scaleX(0);
       transition: transform ${theme.transitions.fast};
     }
 
     &:hover {
-      color: #06B6D4;
+      color: #6BBCD4;
 
       &::after {
         transform: scaleX(1);
@@ -445,7 +445,7 @@ const SwitchForm = styled.div`
 const BackButton = styled.button`
   background: var(--t-glass);
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(59, 130, 246, 0.3);
+  border: 2px solid rgba(201, 165, 32, 0.3);
   color: var(--t-text);
   border-radius: ${theme.radius.lg}px;
   padding: ${theme.spacing.sm + 2}px ${theme.spacing.lg}px;
@@ -458,12 +458,12 @@ const BackButton = styled.button`
 
   &:hover {
     background: var(--t-glass-light);
-    border-color: #3B82F6;
+    border-color: #C9A520;
     color: #ffffff;
     transform: translateX(-4px);
     box-shadow:
-      0 6px 20px rgba(59, 130, 246, 0.3),
-      -4px 0 15px rgba(59, 130, 246, 0.2);
+      0 6px 20px rgba(201, 165, 32, 0.3),
+      -4px 0 15px rgba(201, 165, 32, 0.2);
   }
 
   &:active {

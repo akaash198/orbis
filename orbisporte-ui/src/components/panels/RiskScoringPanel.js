@@ -34,7 +34,7 @@ const Header = styled.div`
 `;
 const Title = styled.h2`
   margin:0;font-size:20px;font-weight:700;
-  background:linear-gradient(135deg,#60a5fa 0%,#38bdf8 55%,#22d3ee 100%);
+  background:linear-gradient(135deg,#E8C84A 0%,#6BBCD4 55%,#8DD4EC 100%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   display:flex;align-items:center;gap:10px;
 `;
@@ -60,7 +60,7 @@ const Grid = styled.div`
 const Tabs = styled.div`display:flex;gap:4px;border-bottom:1px solid var(--t-border-light);`;
 const Tab  = styled.button`
   padding:8px 16px;font-size:12px;font-weight:600;border:none;background:transparent;
-  cursor:pointer;border-bottom:2px solid ${p=>p.active?'#60a5fa':'transparent'};
+  cursor:pointer;border-bottom:2px solid ${p=>p.active?'#E8C84A':'transparent'};
   color:${p=>p.active?'var(--t-btn-color)':'var(--t-text-sub)'};transition:all .2s;
   &:hover{color:var(--t-text)}
 `;
@@ -70,15 +70,15 @@ const FilingList = styled.div`display:flex;flex-direction:column;gap:8px;`;
 const FilingRow  = styled.div`
   display:flex;align-items:center;gap:12px;
   padding:14px 16px;border-radius:10px;cursor:pointer;
-  border:2px solid ${p=>p.selected?'#3B82F6':'var(--t-border)'};
-  background:${p=>p.selected?'rgba(59,130,246,0.1)':'var(--t-bg-dark)'};
+  border:2px solid ${p=>p.selected?'#C9A520':'var(--t-border)'};
+  background:${p=>p.selected?'rgba(201,165,32,0.1)':'var(--t-bg-dark)'};
   transition:all .2s;
-  &:hover{border-color:rgba(59,130,246,0.4);background:var(--t-hover)}
+  &:hover{border-color:rgba(201,165,32,0.4);background:var(--t-hover)}
 `;
 const FilingRadio = styled.div`
   width:16px;height:16px;border-radius:50%;flex-shrink:0;
-  border:2px solid ${p=>p.selected?'#3B82F6':'var(--t-border)'};
-  background:${p=>p.selected?'#3B82F6':'transparent'};
+  border:2px solid ${p=>p.selected?'#C9A520':'var(--t-border)'};
+  background:${p=>p.selected?'#C9A520':'transparent'};
   display:flex;align-items:center;justify-content:center;
   &::after{
     content:'';display:${p=>p.selected?'block':'none'};
@@ -92,7 +92,7 @@ const FilingMeta = styled.div`font-size:11px;color:var(--t-text-sub);margin-top:
 // ─── Misc ──────────────────────────────────────────────────────────────────────
 const Spinner = styled.div`
   width:${p=>p.size||20}px;height:${p=>p.size||20}px;border-radius:50%;
-  border:2px solid rgba(59,130,246,0.2);border-top-color:#3B82F6;
+  border:2px solid rgba(201,165,32,0.2);border-top-color:#C9A520;
   animation:${spinAnim} .8s linear infinite;flex-shrink:0;
 `;
 const Pulsing = styled.div`animation:${pulseAnim} 1.5s ease infinite;color:var(--t-text-sub);font-size:13px;`;
@@ -108,10 +108,10 @@ const EmptyState = styled.div`
 `;
 const RunBtn = styled.button`
   padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:700;
-  background:${p=>p.disabled?'var(--t-hover)':'linear-gradient(135deg,#3B82F6,#2563EB)'};
+  background:${p=>p.disabled?'var(--t-hover)':'linear-gradient(135deg,#C9A520,#876E12)'};
   color:${p=>p.disabled?'var(--t-text-ter)':'#fff'};
   transition:all .2s;display:flex;align-items:center;gap:8px;
-  &:hover:not(:disabled){background:linear-gradient(135deg,#3b82f6,#2563eb);transform:translateY(-1px)}
+  &:hover:not(:disabled){background:linear-gradient(135deg,#3b82f6,#876E12);transform:translateY(-1px)}
 `;
 const StatusPip = styled.span`
   font-size:10px;padding:1px 7px;border-radius:8px;font-weight:600;
@@ -483,7 +483,7 @@ function ScoreResult({ result }) {
           <div style={{fontSize:12,color:'var(--t-text-sub)'}}>{tier_label}</div>
           <div style={{
             fontSize:11,padding:'6px 10px',borderRadius:6,
-            background:'rgba(37,99,235,0.08)',border:'1px solid rgba(66,153,225,.2)',
+            background:'rgba(135,110,18,0.08)',border:'1px solid rgba(66,153,225,.2)',
             color:'#90cdf4',
           }}>
             Customs equivalent: {customs_equiv}
@@ -571,7 +571,7 @@ function ScoreResult({ result }) {
         ].map(t => (
           <div key={t.tier} style={{
             padding:'14px 16px',borderRadius:10,
-            border:`2px solid ${t.active ? _tierColor(t.tier) : 'rgba(59,130,246,0.2)'}`,
+            border:`2px solid ${t.active ? _tierColor(t.tier) : 'rgba(201,165,32,0.2)'}`,
             background: t.active ? `${_tierColor(t.tier)}10` : 'var(--t-bg-dark)',
           }}>
             <div style={{fontSize:13,fontWeight:700,color:_tierColor(t.tier),marginBottom:6}}>

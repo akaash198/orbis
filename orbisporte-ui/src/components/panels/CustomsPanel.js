@@ -96,7 +96,7 @@ const Card = styled.div`
     height: 2px;
     background: linear-gradient(90deg,
       transparent,
-      rgba(59, 130, 246, 0.3),
+      rgba(201, 165, 32, 0.3),
       transparent
     );
     pointer-events: none;
@@ -159,7 +159,7 @@ const DocumentGroupHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: ${theme.spacing.sm}px ${theme.spacing.md}px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%);
+  background: linear-gradient(135deg, rgba(201, 165, 32, 0.2) 0%, rgba(135, 110, 18, 0.2) 100%);
   border-radius: ${theme.radius.md}px;
   margin-bottom: ${theme.spacing.sm}px;
   border-left: 3px solid ${theme.colors.primary.main};
@@ -183,13 +183,13 @@ const DocumentItem = styled.label`
   border-radius: ${theme.radius.md}px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: ${props => props.checked ? 'rgba(59, 130, 246, 0.15)' : 'var(--t-bg-dark)'};
+  background: ${props => props.checked ? 'rgba(201, 165, 32, 0.15)' : 'var(--t-bg-dark)'};
   border: 1px solid ${props => props.checked ? theme.colors.primary.main : 'var(--t-border-light)'};
 
   &:hover {
-    background: ${props => props.checked ? 'rgba(59, 130, 246, 0.25)' : 'var(--t-hover)'};
+    background: ${props => props.checked ? 'rgba(201, 165, 32, 0.25)' : 'var(--t-hover)'};
     transform: translateX(4px);
-    border-color: ${props => props.checked ? theme.colors.primary.main : 'rgba(59, 130, 246, 0.3)'};
+    border-color: ${props => props.checked ? theme.colors.primary.main : 'rgba(201, 165, 32, 0.3)'};
   }
 `;
 
@@ -255,11 +255,11 @@ const Select = styled.select`
     outline: none;
     border-color: ${theme.colors.primary.main};
     background: var(--t-input-bg-focus);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(201, 165, 32, 0.1);
   }
 
   &:hover {
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(201, 165, 32, 0.3);
   }
 
   option {
@@ -270,7 +270,7 @@ const Select = styled.select`
 
 const GenerateButton = styled.button`
   padding: ${theme.spacing.md}px ${theme.spacing.xl}px;
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #C9A520 0%, #876E12 100%);
   color: white;
   border: none;
   border-radius: ${theme.radius.md}px;
@@ -278,15 +278,15 @@ const GenerateButton = styled.button`
   font-size: ${theme.typography.fontSize.md}px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(201, 165, 32, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: ${theme.spacing.sm}px;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    background: linear-gradient(135deg, #E8C84A 0%, #C9A520 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 6px 25px rgba(201, 165, 32, 0.5);
   }
 
   &:active:not(:disabled) {
@@ -323,7 +323,7 @@ const TabContainer = styled.div`
 const Tab = styled.button`
   padding: ${theme.spacing.sm}px ${theme.spacing.lg}px;
   background: ${props => props.active
-    ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)'
+    ? 'linear-gradient(135deg, #C9A520 0%, #876E12 100%)'
     : 'transparent'};
   color: ${props => props.active ? 'white' : theme.colors.text.secondary};
   border: none;
@@ -333,12 +333,12 @@ const Tab = styled.button`
   transition: all 0.2s ease;
   font-size: ${theme.typography.fontSize.sm}px;
   white-space: nowrap;
-  box-shadow: ${props => props.active ? '0 2px 10px rgba(59, 130, 246, 0.3)' : 'none'};
+  box-shadow: ${props => props.active ? '0 2px 10px rgba(201, 165, 32, 0.3)' : 'none'};
 
   &:hover {
     background: ${props => props.active
-      ? 'linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%)'
-      : 'rgba(59, 130, 246, 0.1)'};
+      ? 'linear-gradient(135deg, #E8C84A 0%, #C9A520 100%)'
+      : 'rgba(201, 165, 32, 0.1)'};
     color: ${props => props.active ? 'white' : theme.colors.text.primary};
   }
 `;
@@ -378,7 +378,7 @@ const LoadingContainer = styled.div`
 const Spinner = styled.div`
   width: 50px;
   height: 50px;
-  border: 4px solid rgba(59, 130, 246, 0.1);
+  border: 4px solid rgba(201, 165, 32, 0.1);
   border-top: 4px solid ${theme.colors.primary.main};
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -436,20 +436,20 @@ const Badge = styled.span`
   align-items: center;
   justify-content: center;
   padding: 4px 12px;
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #C9A520 0%, #876E12 100%);
   color: white;
   border-radius: ${theme.radius.pill}px;
   font-size: ${theme.typography.fontSize.xs}px;
   font-weight: ${theme.typography.fontWeight.bold};
   min-width: 24px;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(201, 165, 32, 0.3);
 `;
 
 const SelectionSummary = styled.div`
   padding: ${theme.spacing.md}px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(75, 0, 130, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(201, 165, 32, 0.1) 0%, rgba(75, 0, 130, 0.1) 100%);
   border-radius: ${theme.radius.md}px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(201, 165, 32, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -469,9 +469,9 @@ const SummaryValue = styled.span`
 
 const PreviewDocumentItem = styled.div`
   padding: ${theme.spacing.md}px;
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(201, 165, 32, 0.05);
   border-radius: ${theme.radius.md}px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(201, 165, 32, 0.2);
   margin-bottom: ${theme.spacing.md}px;
 
   &:last-child {

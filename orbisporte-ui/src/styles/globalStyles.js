@@ -12,61 +12,61 @@ const GlobalStyles = createGlobalStyle`
   /* ─── Theme CSS custom properties ─────────────────────────────────────────── */
   :root,
   [data-theme="dark"] {
-    --t-bg:              #04060f;
-    --t-bg-light:        #07111f;
-    --t-bg-dark:         rgba(255,255,255,0.03);
-    --t-hero-bg:         radial-gradient(ellipse at 15% 85%, rgba(29,78,216,0.55) 0%, transparent 55%),
-                         radial-gradient(ellipse at 85% 15%, rgba(14,165,233,0.2)  0%, transparent 50%),
-                         #04060f;
-    --t-card:            rgba(255,255,255,0.05);
-    --t-card-hover:      rgba(255,255,255,0.08);
-    --t-card-elevated:   rgba(255,255,255,0.06);
-    --t-card-gradient:   linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.04) 100%);
-    --t-border:          rgba(255,255,255,0.10);
-    --t-border-light:    rgba(255,255,255,0.07);
-    --t-hover:           rgba(255,255,255,0.08);
-    --t-hover-dark:      rgba(255,255,255,0.06);
-    --t-glass:           rgba(255,255,255,0.06);
-    --t-glass-light:     rgba(255,255,255,0.10);
-    --t-glass-dark:      rgba(0,0,0,0.40);
-    --t-overlay:         rgba(0,0,0,0.70);
-    --t-text:            rgba(255,255,255,0.90);
-    --t-text-sub:        rgba(255,255,255,0.55);
-    --t-text-ter:        rgba(255,255,255,0.35);
-    --t-text-hint:       rgba(255,255,255,0.20);
-    --t-text-dis:        rgba(255,255,255,0.25);
-    --t-input-bg:        rgba(255,255,255,0.06);
-    --t-input-border:    rgba(255,255,255,0.12);
-    --t-input-bg-focus:  rgba(255,255,255,0.08);
-    --t-scrollbar:       rgba(59,130,246,0.50);
-    --t-panel-bg:        radial-gradient(ellipse at 15% 85%, rgba(29,78,216,0.55) 0%, transparent 55%),
-                         radial-gradient(ellipse at 85% 15%, rgba(14,165,233,0.20) 0%, transparent 50%),
+    --t-bg:              #0A0D14;
+    --t-bg-light:        #111620;
+    --t-bg-dark:         #0D1020;
+    --t-hero-bg:         radial-gradient(ellipse at 18% 82%, rgba(201,165,32,0.10) 0%, transparent 55%),
+                         radial-gradient(ellipse at 82% 18%, rgba(107,188,212,0.08) 0%, transparent 50%),
+                         #0A0D14;
+    --t-card:            #161D2C;
+    --t-card-hover:      #1C2438;
+    --t-card-elevated:   #1E2638;
+    --t-card-gradient:   linear-gradient(135deg, rgba(22,29,44,0.96) 0%, rgba(28,36,56,0.92) 100%);
+    --t-border:          #1E2638;
+    --t-border-light:    #141A28;
+    --t-hover:           rgba(201,165,32,0.06);
+    --t-hover-dark:      rgba(201,165,32,0.10);
+    --t-glass:           rgba(22,29,44,0.72);
+    --t-glass-light:     rgba(28,36,56,0.84);
+    --t-glass-dark:      rgba(10,13,20,0.56);
+    --t-overlay:         rgba(4,6,14,0.72);
+    --t-text:            #E2E8F5;
+    --t-text-sub:        #8B97AE;
+    --t-text-ter:        #4A5A72;
+    --t-text-hint:       #566478;
+    --t-text-dis:        #7A8EAA;
+    --t-input-bg:        #0D1020;
+    --t-input-border:    #273047;
+    --t-input-bg-focus:  #111620;
+    --t-scrollbar:       rgba(201,165,32,0.45);
+    --t-panel-bg:        radial-gradient(ellipse at 18% 82%, rgba(201,165,32,0.10) 0%, transparent 55%),
+                         radial-gradient(ellipse at 85% 15%, rgba(107,188,212,0.08) 0%, transparent 50%),
                          radial-gradient(ellipse at 50% 50%, rgba(17,24,58,0.80)  0%, transparent 80%),
-                         #04060f;
-    --t-card-shadow:     0 4px 20px rgba(0,0,0,0.50);
-    --t-card-shadow-hov: 0 8px 32px rgba(0,0,0,0.60), 0 0 20px rgba(59,130,246,0.15);
-    --t-btn-bg:          rgba(59,130,246,0.20);
-    --t-btn-border:      rgba(59,130,246,0.40);
-    --t-btn-color:       #60a5fa;
-    --t-btn-bg-hov:      rgba(59,130,246,0.30);
-    --t-btn-border-hov:  rgba(59,130,246,0.60);
-    --t-btn-dis-bg:      rgba(255,255,255,0.06);
-    --t-btn-dis-color:   rgba(255,255,255,0.25);
-    --t-btn-dis-border:  rgba(255,255,255,0.10);
-    --t-badge-bg:        rgba(59,130,246,0.20);
-    --t-badge-color:     #60a5fa;
-    --t-badge-border:    rgba(59,130,246,0.35);
+                         #0A0D14;
+    --t-card-shadow:     0 2px 8px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.03);
+    --t-card-shadow-hov: 0 8px 28px rgba(0,0,0,0.62), 0 0 20px rgba(201,165,32,0.12);
+    --t-btn-bg:          rgba(201,165,32,0.10);
+    --t-btn-border:      rgba(201,165,32,0.32);
+    --t-btn-color:       #E8C84A;
+    --t-btn-bg-hov:      rgba(201,165,32,0.18);
+    --t-btn-border-hov:  rgba(201,165,32,0.48);
+    --t-btn-dis-bg:      rgba(255,255,255,0.04);
+    --t-btn-dis-color:   rgba(139,151,174,0.55);
+    --t-btn-dis-border:  rgba(30,38,56,0.90);
+    --t-badge-bg:        rgba(201,165,32,0.12);
+    --t-badge-color:     #E8C84A;
+    --t-badge-border:    rgba(201,165,32,0.30);
     --t-skeleton-a:      rgba(255,255,255,0.04);
     --t-skeleton-b:      rgba(255,255,255,0.08);
-    --t-divider:         linear-gradient(90deg, rgba(59,130,246,0.5) 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    --t-divider:         linear-gradient(90deg, rgba(201,165,32,0.35) 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
   }
 
   [data-theme="light"] {
     --t-bg:              #f0f5ff;
     --t-bg-light:        #e4edff;
-    --t-bg-dark:         rgba(59,130,246,0.04);
-    --t-hero-bg:         radial-gradient(ellipse at 15% 85%, rgba(59,130,246,0.12) 0%, transparent 55%),
-                         radial-gradient(ellipse at 85% 15%, rgba(6,182,212,0.08)  0%, transparent 50%),
+    --t-bg-dark:         rgba(201,165,32,0.04);
+    --t-hero-bg:         radial-gradient(ellipse at 15% 85%, rgba(201,165,32,0.10) 0%, transparent 55%),
+                         radial-gradient(ellipse at 85% 15%, rgba(107,188,212,0.08)  0%, transparent 50%),
                          #f0f5ff;
     --t-card:            rgba(255,255,255,0.92);
     --t-card-hover:      #ffffff;
@@ -74,8 +74,8 @@ const GlobalStyles = createGlobalStyle`
     --t-card-gradient:   linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
     --t-border:          rgba(15,23,42,0.12);
     --t-border-light:    rgba(15,23,42,0.07);
-    --t-hover:           rgba(59,130,246,0.06);
-    --t-hover-dark:      rgba(59,130,246,0.10);
+    --t-hover:           rgba(201,165,32,0.05);
+    --t-hover-dark:      rgba(201,165,32,0.08);
     --t-glass:           rgba(255,255,255,0.80);
     --t-glass-light:     rgba(255,255,255,0.92);
     --t-glass-dark:      rgba(15,23,42,0.08);
@@ -86,28 +86,28 @@ const GlobalStyles = createGlobalStyle`
     --t-text-hint:       rgba(15,23,42,0.25);
     --t-text-dis:        rgba(15,23,42,0.30);
     --t-input-bg:        rgba(255,255,255,0.80);
-    --t-input-border:    rgba(59,130,246,0.25);
+    --t-input-border:    rgba(201,165,32,0.22);
     --t-input-bg-focus:  #ffffff;
-    --t-scrollbar:       rgba(59,130,246,0.40);
-    --t-panel-bg:        radial-gradient(ellipse at 15% 85%, rgba(59,130,246,0.10) 0%, transparent 55%),
-                         radial-gradient(ellipse at 85% 15%, rgba(6,182,212,0.06)  0%, transparent 50%),
+    --t-scrollbar:       rgba(201,165,32,0.35);
+    --t-panel-bg:        radial-gradient(ellipse at 15% 85%, rgba(201,165,32,0.08) 0%, transparent 55%),
+                         radial-gradient(ellipse at 85% 15%, rgba(107,188,212,0.06)  0%, transparent 50%),
                          #f0f5ff;
     --t-card-shadow:     0 2px 12px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.05);
-    --t-card-shadow-hov: 0 8px 28px rgba(15,23,42,0.12), 0 0 20px rgba(59,130,246,0.10);
-    --t-btn-bg:          rgba(59,130,246,0.10);
-    --t-btn-border:      rgba(59,130,246,0.35);
-    --t-btn-color:       #2563eb;
-    --t-btn-bg-hov:      rgba(59,130,246,0.18);
-    --t-btn-border-hov:  rgba(59,130,246,0.55);
+    --t-card-shadow-hov: 0 8px 28px rgba(15,23,42,0.12), 0 0 20px rgba(201,165,32,0.08);
+    --t-btn-bg:          rgba(201,165,32,0.08);
+    --t-btn-border:      rgba(201,165,32,0.35);
+    --t-btn-color:       #876E12;
+    --t-btn-bg-hov:      rgba(201,165,32,0.18);
+    --t-btn-border-hov:  rgba(201,165,32,0.38);
     --t-btn-dis-bg:      rgba(15,23,42,0.05);
     --t-btn-dis-color:   rgba(15,23,42,0.30);
     --t-btn-dis-border:  rgba(15,23,42,0.12);
-    --t-badge-bg:        rgba(59,130,246,0.12);
-    --t-badge-color:     #2563eb;
-    --t-badge-border:    rgba(59,130,246,0.30);
+    --t-badge-bg:        rgba(201,165,32,0.10);
+    --t-badge-color:     #876E12;
+    --t-badge-border:    rgba(201,165,32,0.26);
     --t-skeleton-a:      rgba(15,23,42,0.05);
     --t-skeleton-b:      rgba(15,23,42,0.10);
-    --t-divider:         linear-gradient(90deg, rgba(59,130,246,0.4) 0%, rgba(15,23,42,0.08) 50%, transparent 100%);
+    --t-divider:         linear-gradient(90deg, rgba(201,165,32,0.35) 0%, rgba(15,23,42,0.08) 50%, transparent 100%);
   }
 
   /* ─── Reset ────────────────────────────────────────────────────────────────── */
@@ -167,64 +167,15 @@ const GlobalStyles = createGlobalStyle`
   }
 
   button {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin: 0;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: ${theme.spacing.xs}px;
-    padding: ${theme.spacing.sm}px ${theme.spacing.lg}px;
-    background: var(--t-btn-bg);
-    color: var(--t-btn-color);
-    border: 1px solid var(--t-btn-border);
-    border-radius: ${theme.radius.md}px;
-    font-size: ${theme.typography.fontSize.sm};
-    font-weight: ${theme.typography.fontWeight.semibold};
-    letter-spacing: 0.01em;
-    box-shadow: ${theme.shadows.button};
-    transition: all ${theme.transitions.normal} ${theme.transitions.easing.default};
-    backdrop-filter: blur(8px);
-
-    &:hover:not(:disabled) {
-      transform: ${theme.transforms.buttonHover3D};
-      box-shadow: ${theme.shadows.buttonHover};
-      background: var(--t-btn-bg-hov);
-      border-color: var(--t-btn-border-hov);
-    }
-
-    &:active:not(:disabled) {
-      transform: ${theme.transforms.buttonActive3D};
-      box-shadow: ${theme.shadows.buttonActive};
-    }
-
-    &:disabled {
-      background: var(--t-btn-dis-bg);
-      color: var(--t-btn-dis-color);
-      border-color: var(--t-btn-dis-border);
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    &.secondary {
-      background: var(--t-glass);
-      color: var(--t-btn-color);
-      border: 1px solid var(--t-border);
-      box-shadow: ${theme.shadows.sm};
-      &:hover:not(:disabled) {
-        background: var(--t-glass-light);
-        border-color: rgba(59,130,246,0.4);
-      }
-    }
-
-    &.ghost {
-      background: transparent;
-      color: var(--t-text-sub);
-      border: none;
-      box-shadow: none;
-      &:hover:not(:disabled) {
-        background: var(--t-hover);
-        color: var(--t-btn-color);
-      }
-    }
   }
 
   input, textarea, select {
@@ -246,8 +197,8 @@ const GlobalStyles = createGlobalStyle`
 
     &:focus {
       outline: none;
-      border-color: #3B82F6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+      border-color: #C9A520;
+      box-shadow: 0 0 0 3px rgba(201,165,32,0.2);
       background: var(--t-input-bg-focus);
     }
 
@@ -276,7 +227,7 @@ const GlobalStyles = createGlobalStyle`
     background: var(--t-scrollbar);
     border-radius: 10px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: #3B82F6; }
+  ::-webkit-scrollbar-thumb:hover { background: #C9A520; }
 
   /* Keyframe animations */
   @keyframes spin {
@@ -305,8 +256,8 @@ const GlobalStyles = createGlobalStyle`
   }
 
   @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-    50%       { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201,165,32,0.35); }
+    50%       { box-shadow: 0 0 0 8px rgba(201,165,32,0); }
   }
 
   @keyframes shimmer {
@@ -336,7 +287,7 @@ const GlobalStyles = createGlobalStyle`
     background: var(--t-card);
     border-radius: ${theme.radius.lg}px;
     border: 1px solid var(--t-border);
-    border-left: 4px solid #3B82F6;
+    border-left: 4px solid #C9A520;
     box-shadow: var(--t-card-shadow);
     backdrop-filter: blur(20px);
     transition: box-shadow ${theme.transitions.normal}, transform ${theme.transitions.normal};
@@ -382,7 +333,7 @@ const GlobalStyles = createGlobalStyle`
   /* Focus ring */
   .focus-ring:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.3);
+    box-shadow: 0 0 0 3px rgba(201,165,32,0.3);
   }
 
   .transition-all {

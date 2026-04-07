@@ -1,261 +1,101 @@
-# Orbisporte UI - Indian Customs AI Platform
+# Orbisporte-ui 🚀
 
-Modern React-based frontend for the Orbisporte AI-powered Indian Customs document processing platform.
+Welcome to the frontend repository of **Orbisporte**, an AI-driven global trade automation and customs platform.
 
-## Features
+## 📦 Project Overview
 
-### Core Functionality
-- **AI-Powered Document Processing**: Upload and automatically classify customs documents
-- **HS Code Lookup**: Intelligent Harmonized System code classification
-- **Customs Declaration**: Generate ICEGATE-compliant customs declarations
-- **Document Chatbot**: Ask questions about your documents using AI
-- **GST & IEC Validation**: Real-time validation of Indian tax and trade codes
+Orbisporte-ui is a modern, high-performance web interface built with **React** and **Tailwind CSS**. It provides a seamless experience for managing Indian customs filings, trade documentation, and AI-powered automation.
 
-### Indian Customs Specific
-- ICEGATE portal integration
-- Bill of Entry processing
-- Shipping Bill generation
-- GST number validation
-- IEC (Import Export Code) validation
-- India-specific customs workflows
+### Key Technologies 🛠️
+- **Framework**: [React](https://reactjs.org/) (v18.2.0)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for utility-first design.
+- **State Management**: Dual-architecture using [Redux Toolkit](https://redux-toolkit.js.org/) for persistent state and [Zustand](https://zustand-demo.pmnd.rs/) for lightweight global state.
+- **Data Visualization**: [Recharts](https://recharts.org/) for analytics and trade dashboards.
+- **Icons**: [Lucide React](https://lucide.dev/) for a clean, modern UI.
+- **HTTP Client**: [Axios](https://axios-http.com/) for API communication.
+- **Form Handling**: [React Hook Form](https://react-hook-form.com/) with [Zod](https://zod.dev/) validation.
 
-### User Experience
-- Modern, responsive design
-- Real-time document processing
-- Secure authentication with JWT tokens
-- Persistent state management with Redux
-- Beautiful gradient color scheme (Indian flag-inspired)
+---
 
-## Tech Stack
+## 🔗 Backend Connectivity Guide
 
-- **React 18** - Modern UI library
-- **React Router** - Client-side routing
-- **Redux Toolkit** - State management
-- **Redux Persist** - Persistent state
-- **Styled Components** - CSS-in-JS styling
-- **Axios** - HTTP client with interceptors
-- **PDF.js** - PDF document viewing
+This section outlines **everything** you need to know to successfully connect the Orbisporte React frontend to the backend API. The API logic is centralized in `src/services/api.js`.
 
-## Getting Started
+### 1. Environment Configuration
+The frontend determines the backend URL based on environment variables. 
+1. Create a `.env` file at the root of the project.
+2. Define the exact API URL:
+   ```env
+   REACT_APP_API_URL=http://localhost:8000
+   ```
+   *(Note: If left undefined, the fallback is set to `https://orbisporte-backend.spectrai.sg` in `api.js`)*
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Backend API running (default: http://localhost:8000)
+### 2. Networking & Fallback Hosts
+The `api.js` service is built with high availability in mind. It includes a custom **fallback host handler** (`postWithFallback()`). If a request fails due to `ERR_NETWORK`, the application will automatically retry the request against:
+- The configured `REACT_APP_API_URL`
+- `http://127.0.0.1:8000` (if running locally)
+- The current window origin (useful for reverse proxies)
 
-### Installation
+### 3. Authentication & Token Management
+The frontend uses a secure **Access Token (JWT)** and **Refresh Token** mechanism.
 
-1. **Install dependencies:**
+- **Storage**: Tokens are stored explicitly in `localStorage` (`authToken` and `refreshToken`).
+- **Axios Interceptors**: 
+  - Every outbound request automatically injects the `Authorization: Bearer <token>` header based on the stored `authToken`.
+  - If the backend returns a `401 Unauthorized` status, the Axios response interceptor intercepts it, halts the queue, calls `/react/refresh-token` with the `refreshToken`, and re-attempts the original request with the new access token smoothly.
+  - If the refresh token is also expired or invalid, it dispatches a window event `tokenExpired`, which logs the user out.
+
+### 4. Core Backend Services Available
+All backend services are modularized in `src/services/api.js`. When wiring up UI components, import the specific service module needed:
+
+*   `authService`: Handles `/react/login`, `/react/signup`, `/react/logout`, and `/react/validate-token`.
+*   `documentService`: Handles AI document uploads, duplications, standard vs "ULTRA-FAST" data extractions (`/react/extract`, `/react/extract-fast`).
+*   `m02Service`: Interacts with the M02 document processing pipeline (`/m02/process`, `/m02/result`).
+*   `hsCodeService`: Validates and enhances HS codes based on product descriptions (`/react/hscode`).
+*   `customsService`: Generates and exports the final customs declarations (`/customs/generate-declaration`).
+*   `chatService` / `qaService`: Manages RAG (Retrieval-Augmented Generation) document chatting and general QA.
+*   `dutyService`: Calculates complex customs duties (`/react/duty/calculate`).
+
+---
+
+## 🚀 Getting Started Locally
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/akaash198/orbisporte-ui.git
+cd orbisporte-ui
+```
+
+### 2. Install Dependencies
+Ensure you have [Node.js](https://nodejs.org/) installed, then run:
 ```bash
 npm install
 ```
 
-2. **Configure environment:**
+### 3. Start the Development Server
 ```bash
-cp .env.example .env
-```
-
-Edit `.env` and set your API URL:
-```
-REACT_APP_API_BASE_URL=http://localhost:8000
-REACT_APP_NAME=Orbisporte
-REACT_APP_TAGLINE=AI-Powered Indian Customs Platform
-```
-
-3. **Start development server:**
-```bash
+# Ensure your .env has REACT_APP_API_URL setup
 npm start
 ```
-
-The app will open at [http://localhost:3000](http://localhost:3000)
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-The optimized production build will be in the `build/` folder.
-
-## Project Structure
-
-```
-orbisporte-ui/
-├── public/
-│   └── index.html              # HTML template
-├── src/
-│   ├── components/
-│   │   ├── auth/               # Login/Signup forms
-│   │   ├── common/             # Reusable components
-│   │   ├── layouts/            # Layout components (Header, Sidebar)
-│   │   └── panels/             # Main application panels
-│   ├── contexts/               # React contexts (Auth, Documents)
-│   ├── hooks/                  # Custom React hooks
-│   ├── services/               # API service layer
-│   ├── store/                  # Redux store configuration
-│   ├── styles/                 # Global styles and theme
-│   ├── App.js                  # Main app component with routing
-│   └── index.js                # Application entry point
-├── .env.example                # Environment variables template
-├── .gitignore
-├── package.json
-└── README.md
-```
-
-## Key Components
-
-### Authentication
-- **LoginForm**: User login with JWT authentication
-- **SignupForm**: New user registration
-- **AuthContext**: Global authentication state
-
-### Panels
-- **DashboardPanel**: Overview and statistics
-- **DocumentPanel**: Document management and upload
-- **HSCodePanel**: HS Code lookup and classification
-- **CustomsPanel**: GST/IEC validation and ICEGATE integration
-- **QAPanel**: AI chatbot for document questions
-- **SettingsPanel**: User profile and settings
-
-### API Integration
-All API calls are centralized in `src/services/api.js`:
-- Automatic JWT token injection
-- Token refresh on expiration
-- Comprehensive error handling
-- Organized by feature (auth, documents, customs, etc.)
-
-## Available Routes
-
-| Route | Component | Description |
-|-------|-----------|-------------|
-| `/` | Landing | Public landing page |
-| `/login` | Landing | Login page |
-| `/dashboard` | Dashboard | Main dashboard (protected) |
-| `/documents` | Documents | Document management (protected) |
-| `/hscode` | HS Code | HS Code lookup (protected) |
-| `/customs` | Customs | Customs declarations (protected) |
-| `/qa` | Q&A | Document chatbot (protected) |
-| `/settings` | Settings | User settings (protected) |
-
-## Theme Customization
-
-The theme is defined in `src/styles/theme.js` with Indian Customs-inspired colors:
-
-```javascript
-colors: {
-  primary: '#FF6B35',    // Saffron-inspired orange
-  secondary: '#138808',  // Deep green
-  accent: '#004C99',     // Navy blue
-  // ... more colors
-}
-```
-
-## State Management
-
-### Redux Store
-- **authSlice**: User authentication state
-- **Redux Persist**: Persists auth state across sessions
-
-### Context Providers
-- **AuthContext**: Authentication methods and state
-- **DocumentContext**: Document operations and state
-
-## API Endpoints Used
-
-### Authentication
-- `POST /react/login` - User login
-- `POST /react/signup` - User registration
-- `POST /react/logout` - User logout
-- `POST /react/refresh-token` - Refresh access token
-
-### Documents
-- `POST /react/upload-document` - Upload document
-- `POST /react/classify-document` - Classify document type
-- `POST /react/extract-data` - Extract document data
-- `GET /react/documents` - Get all documents
-- `DELETE /react/documents/:id` - Delete document
-
-### Indian Customs
-- `POST /react/hscode-lookup` - HS Code lookup
-- `POST /react/validate-gst` - Validate GST number
-- `POST /react/validate-iec` - Validate IEC number
-- `POST /react/generate-customs-declaration` - Generate declaration
-- `POST /react/process-bill-of-entry` - Process Bill of Entry
-- `POST /react/process-shipping-bill` - Process Shipping Bill
-
-### Q&A
-- `POST /react/ask-question` - Ask document question
-- `GET /react/chat-history/:id` - Get chat history
-
-## Development
-
-### Available Scripts
-
-- `npm start` - Start development server
-- `npm build` - Build for production
-- `npm test` - Run tests
-- `npm eject` - Eject from Create React App
-
-### Code Style
-- Use functional components with hooks
-- Styled Components for all styling
-- Centralized API calls in service layer
-- Context for global state, Redux for persistence
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Security Features
-
-- JWT-based authentication
-- Automatic token refresh
-- Secure token storage
-- Protected routes
-- XSS protection via React
-- CORS handling
-
-## Contributing
-
-1. Follow existing component structure
-2. Use Styled Components for styling
-3. Maintain Indian Customs theme consistency
-4. Add proper error handling
-5. Test authentication flows
-
-## Troubleshooting
-
-### Common Issues
-
-**Cannot connect to backend:**
-- Check `REACT_APP_API_BASE_URL` in `.env`
-- Ensure backend is running on correct port
-- Check CORS configuration in backend
-
-**Login not working:**
-- Clear browser local storage
-- Check network tab for API errors
-- Verify backend credentials
-
-**Styling issues:**
-- Clear browser cache
-- Check theme provider is wrapping app
-- Verify styled-components installation
-
-## License
-
-MIT License - See LICENSE file
-
-## Support
-
-For issues and questions:
-- Check the backend API documentation
-- Review the component source code
-- Ensure environment variables are set correctly
+The application will be available at `http://localhost:3000`.
 
 ---
 
-Built with ⚡ for Indian Customs by the Orbisporte Team
+## 📂 Codebase Architecture
+
+- `src/components/`: Reusable UI components (Buttons, Badges, Modals, etc.).
+- `src/services/api.js`: The central powerhouse for Axio configuration and backend communication logic.
+- `src/styles/`: Theme definitions and global CSS configurations.
+- `src/hooks/`: Custom React hooks for API calls and state logic.
+- `src/store/`: Redux and Zustand store definitions.
+- `src/auth/`: Authentication flow and secure routing.
+- `public/`: Static assets and standard HTML entry point.
+
+---
+
+## 🛠️ Contribution
+Feel free to submit issues or pull requests. Please ensure your code follows the existing style and includes proper documentation.
+
+---
+
+**Developed by SPECTRA AI PTE. LTD., Singapore**

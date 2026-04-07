@@ -79,7 +79,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     result = login_user(db, request.user_name, request.password)
 
     if not result:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid username, email, or password")
 
     return result
 

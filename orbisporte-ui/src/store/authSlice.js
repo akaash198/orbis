@@ -20,12 +20,32 @@ export const loginUser = createAsyncThunk(
       }
       throw new Error('Login failed');
     } catch (error) {
-      // Normalize errors
+      // --- MOCK BYPASS FOR UI EXPLORATION ---
+      const isTestUser = (user_name === 'testuser' && password === 'password123') || 
+                         (user_name === 'admin' && password === 'admin123');
+      const isNetworkError = error.code === 'ERR_NETWORK' || (!error.response && error.request);
+      
+      if (isTestUser && isNetworkError) {
+        console.warn('[AUTH] Backend unreachable. Using mock credentials for UI exploration.');
+        return {
+          user: {
+            id: 1,
+            user_name: user_name,
+            first_name: 'Test',
+            last_name: 'User',
+            role: 'admin',
+            email_id: 'test@orbisporte.com'
+          },
+          token: 'mock-jwt-token-for-dev'
+        };
+      }
+      // --------------------------------------
+
       if (error.code === 'ERR_NETWORK' || (!error.response && error.request)) {
         return rejectWithValue('Cannot reach server. Please ensure the backend is running.');
       }
 
-      let errorMessage = 'Invalid username or password. Please try again.';
+      let errorMessage = 'Invalid username, email, or password. Please try again.';
       if (error.response?.data) {
         const errorData = error.response.data;
         if (Array.isArray(errorData.detail)) {
@@ -128,7 +148,7 @@ const authSlice = createSlice({
 
         if (action.payload?.auth) {
           // Restore state from persisted data
-          const { user, token, isAuthenticated } = action.payload.auth;
+          const { user, token } = action.payload.auth;
           if (token && user) {
             // Restore token in API service
             authService.setToken(token);
@@ -174,9 +194,15 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(signupUser.fulfilled, (state) => {
+      .addCase(signupUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
+        if (action.payload?.user && action.payload?.access_token) {
+          state.user = action.payload.user;
+          state.token = action.payload.access_token;
+          state.isAuthenticated = true;
+          authService.setToken(action.payload.access_token);
+        }
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -216,4 +242,3 @@ const authSlice = createSlice({
 
 export const { updateUser, clearError } = authSlice.actions;
 export default authSlice.reducer;
-

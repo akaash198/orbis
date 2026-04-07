@@ -45,7 +45,7 @@ const ExecutiveHeader = styled.div`
   border-radius: ${theme.radius.xl}px;
   box-shadow:
     0 4px 24px rgba(0,0,0,0.5),
-    0 0 40px rgba(59, 130, 246, 0.15),
+    0 0 40px rgba(201, 165, 32, 0.15),
     inset 0 1px 0 rgba(255,255,255,0.06);
   position: relative;
   overflow: hidden;
@@ -58,10 +58,10 @@ const ExecutiveHeader = styled.div`
     right: 0;
     height: 3px;
     background: linear-gradient(90deg,
-      #3B82F6 0%,
-      #06B6D4 33%,
+      #C9A520 0%,
+      #6BBCD4 33%,
       #8B5CF6 66%,
-      #3B82F6 100%
+      #C9A520 100%
     );
     background-size: 200% auto;
     animation: ${shimmer} 3s linear infinite;
@@ -155,7 +155,7 @@ const QuadrantCard = styled.div`
   padding: ${theme.spacing.xxl}px;
   box-shadow:
     0 4px 24px rgba(0,0,0,0.5),
-    0 0 40px rgba(29, 78, 216, 0.08),
+    0 0 40px rgba(201, 165, 32, 0.08),
     inset 0 1px 0 rgba(255,255,255,0.06);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -170,7 +170,7 @@ const QuadrantCard = styled.div`
     height: 2px;
     background: linear-gradient(90deg,
       transparent 0%,
-      rgba(59, 130, 246, 0.6) 50%,
+      rgba(201, 165, 32, 0.6) 50%,
       transparent 100%
     );
   }
@@ -184,7 +184,7 @@ const QuadrantCard = styled.div`
     height: 100%;
     background: linear-gradient(90deg,
       transparent 0%,
-      rgba(59, 130, 246, 0.1) 50%,
+      rgba(201, 165, 32, 0.1) 50%,
       transparent 100%
     );
     transition: left 0.6s ease;
@@ -194,10 +194,10 @@ const QuadrantCard = styled.div`
     transform: translateY(-4px);
     box-shadow:
       0 12px 40px rgba(0,0,0,0.6),
-      0 0 0 1px rgba(59, 130, 246, 0.35),
-      0 0 50px rgba(59, 130, 246, 0.15),
+      0 0 0 1px rgba(201, 165, 32, 0.35),
+      0 0 50px rgba(201, 165, 32, 0.15),
       inset 0 1px 0 rgba(255,255,255,0.08);
-    border-color: rgba(59,130,246,0.5);
+    border-color: rgba(201,165,32,0.5);
 
     &::after {
       left: 100%;
@@ -212,9 +212,9 @@ const QuadrantHeader = styled.div`
   margin-bottom: ${theme.spacing.xl}px;
   padding-bottom: ${theme.spacing.lg}px;
   border-bottom: 2px solid transparent;
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%);
+  background: linear-gradient(90deg, rgba(201, 165, 32, 0.15) 0%, transparent 100%);
   background-clip: padding-box;
-  border-image: linear-gradient(90deg, rgba(59, 130, 246, 0.5) 0%, transparent 80%) 1;
+  border-image: linear-gradient(90deg, rgba(201, 165, 32, 0.5) 0%, transparent 80%) 1;
   border-image-slice: 0 0 1 0;
   position: relative;
 
@@ -225,13 +225,13 @@ const QuadrantHeader = styled.div`
     bottom: -2px;
     width: 60px;
     height: 2px;
-    background: linear-gradient(90deg, #3B82F6 0%, #06B6D4 100%);
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+    background: linear-gradient(90deg, #C9A520 0%, #6BBCD4 100%);
+    box-shadow: 0 0 10px rgba(201, 165, 32, 0.6);
   }
 
   .icon {
     font-size: ${theme.typography.fontSize['2xl']};
-    filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.6));
+    filter: drop-shadow(0 4px 12px rgba(201, 165, 32, 0.6));
     animation: ${pulse} 3s ease-in-out infinite;
   }
 
@@ -284,8 +284,8 @@ const StatCard = styled.div`
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 30px rgba(59,130,246,0.2);
-    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 30px rgba(201,165,32,0.2);
+    border-color: rgba(201,165,32,0.6);
     background: var(--t-hover);
   }
 `;
@@ -303,7 +303,7 @@ const StatHeader = styled.div`
     align-items: center;
     justify-content: center;
     border-radius: ${theme.radius.md}px;
-    background: ${props => props.$iconBg || 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2))'};
+    background: ${props => props.$iconBg || 'linear-gradient(135deg, rgba(201, 165, 32, 0.2), rgba(6, 182, 212, 0.2))'};
     transition: all ${theme.transitions.normal};
 
     .icon {
@@ -349,7 +349,7 @@ const RecentActivity = styled.div`
   margin-bottom: ${theme.spacing.xxl}px;
 
   &:hover {
-    box-shadow: 0 8px 28px rgba(0,0,0,0.5), 0 0 20px rgba(59,130,246,0.1);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5), 0 0 20px rgba(201,165,32,0.1);
   }
 `;
 
@@ -402,7 +402,7 @@ const ActivityItem = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15));
+    background: linear-gradient(135deg, rgba(201, 165, 32, 0.15), rgba(6, 182, 212, 0.15));
     border-radius: ${theme.radius.md}px;
     flex-shrink: 0;
   }
@@ -437,8 +437,8 @@ const LogisticsLane = styled.div`
   transition: all ${theme.transitions.normal};
 
   &:hover {
-    background: rgba(37,99,235,0.12);
-    border-color: rgba(59, 130, 246, 0.25);
+    background: rgba(135,110,18,0.12);
+    border-color: rgba(201, 165, 32, 0.25);
     transform: translateX(2px);
   }
 
@@ -487,9 +487,9 @@ const StatusBadge = styled.span`
   `}
 
   ${props => props.$variant === 'arrived' && `
-    background: rgba(59, 130, 246, 0.2);
-    color: #3B82F6;
-    border: 1px solid rgba(59, 130, 246, 0.4);
+    background: rgba(201, 165, 32, 0.2);
+    color: #C9A520;
+    border: 1px solid rgba(201, 165, 32, 0.4);
   `}
 `;
 
@@ -513,7 +513,7 @@ const BarChartContainer = styled.div`
     left: ${theme.spacing.xl}px;
     right: ${theme.spacing.xl}px;
     height: 1px;
-    background: rgba(59, 130, 246, 0.3);
+    background: rgba(201, 165, 32, 0.3);
   }
 `;
 
@@ -530,13 +530,13 @@ const BarColumn = styled.div`
   .bar {
     width: 100%;
     max-width: 50px;
-    background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
+    background: linear-gradient(180deg, #C9A520 0%, #876E12 100%);
     border-radius: ${theme.radius.md}px ${theme.radius.md}px 0 0;
     height: ${props => props.$height}%;
     min-height: ${props => props.$height > 0 ? '20px' : '0px'};
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow:
-      0 -4px 20px rgba(59, 130, 246, 0.4),
+      0 -4px 20px rgba(201, 165, 32, 0.4),
       inset 0 -2px 8px rgba(0, 0, 0, 0.2),
       inset 0 2px 8px rgba(255, 255, 255, 0.1);
     position: relative;
@@ -566,7 +566,7 @@ const BarColumn = styled.div`
     &:hover {
       transform: translateY(-4px) scale(1.05);
       box-shadow:
-        0 -8px 30px rgba(59, 130, 246, 0.6),
+        0 -8px 30px rgba(201, 165, 32, 0.6),
         inset 0 -2px 8px rgba(0, 0, 0, 0.2),
         inset 0 2px 12px rgba(255, 255, 255, 0.2);
     }
@@ -589,7 +589,7 @@ const DonutChart = styled.div`
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
-    #3B82F6 0deg ${props => props.$lowRisk || 270}deg,
+    #C9A520 0deg ${props => props.$lowRisk || 270}deg,
     #F59E0B ${props => props.$lowRisk || 270}deg ${props => (props.$lowRisk || 270) + (props.$mediumRisk || 60)}deg,
     #EF4444 ${props => (props.$lowRisk || 270) + (props.$mediumRisk || 60)}deg 360deg
   );
@@ -597,7 +597,7 @@ const DonutChart = styled.div`
   margin: ${theme.spacing.xl}px auto;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.1),
-    0 0 30px rgba(59, 130, 246, 0.12),
+    0 0 30px rgba(201, 165, 32, 0.12),
     inset 0 0 20px rgba(0, 0, 0, 0.04);
   transform: rotate(-90deg);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -634,7 +634,7 @@ const DonutChart = styled.div`
     transform: rotate(-90deg) scale(1.05);
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.12),
-      0 0 50px rgba(59, 130, 246, 0.2),
+      0 0 50px rgba(201, 165, 32, 0.2),
       inset 0 0 20px rgba(0, 0, 0, 0.02);
   }
 `;
@@ -659,7 +659,7 @@ const ChartLegend = styled.div`
     transition: all ${theme.transitions.normal};
 
     &:hover {
-      background: rgba(59, 130, 246, 0.05);
+      background: rgba(201, 165, 32, 0.05);
       transform: translateX(4px);
     }
 
@@ -705,15 +705,15 @@ const AlertPanel = styled.div`
 `;
 
 const InfoPanel = styled.div`
-  background: linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(14,165,233,0.08) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: linear-gradient(135deg, rgba(135,110,18,0.12) 0%, rgba(107,188,212,0.08) 100%);
+  border: 1px solid rgba(201, 165, 32, 0.25);
   border-radius: ${theme.radius.lg}px;
   padding: ${theme.spacing.lg}px;
   margin-top: ${theme.spacing.lg}px;
   position: relative;
   overflow: hidden;
   box-shadow:
-    0 2px 8px rgba(59, 130, 246, 0.08),
+    0 2px 8px rgba(201, 165, 32, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: all ${theme.transitions.normal};
 
@@ -724,14 +724,14 @@ const InfoPanel = styled.div`
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(180deg, #3B82F6 0%, #06B6D4 100%);
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    background: linear-gradient(180deg, #C9A520 0%, #6BBCD4 100%);
+    box-shadow: 0 0 10px rgba(201, 165, 32, 0.5);
   }
 
   &:hover {
-    border-color: rgba(59, 130, 246, 0.4);
+    border-color: rgba(201, 165, 32, 0.4);
     box-shadow:
-      0 4px 16px rgba(59, 130, 246, 0.1),
+      0 4px 16px rgba(201, 165, 32, 0.1),
       inset 0 1px 0 rgba(255,255,255,0.05);
   }
 
@@ -1190,12 +1190,12 @@ const DashboardPanel = ({ onPageChange }) => {
             gap: `${theme.spacing.md}px`,
             marginBottom: `${theme.spacing.xl}px`,
             padding: `${theme.spacing.md}px`,
-            background: 'rgba(59, 130, 246, 0.05)',
+            background: 'rgba(201, 165, 32, 0.05)',
             borderRadius: `${theme.radius.md}px`,
-            border: '1px solid rgba(59, 130, 246, 0.1)'
+            border: '1px solid rgba(201, 165, 32, 0.1)'
           }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3B82F6' }}>{stats.totalDocuments}</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#C9A520' }}>{stats.totalDocuments}</div>
               <div style={{ fontSize: '10px', color: "var(--t-text-sub)", textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Uploaded</div>
             </div>
             <div style={{ textAlign: 'center' }}>
@@ -1308,7 +1308,7 @@ const DashboardPanel = ({ onPageChange }) => {
 
           <ChartLegend>
             <div className="legend-item">
-              <div className="color-box" style={{ background: '#3B82F6' }}></div>
+              <div className="color-box" style={{ background: '#C9A520' }}></div>
               <span className="label">
                 ✅ {stats.totalDocuments > 0 ? Math.round((stats.processedDocuments / stats.totalDocuments) * 100) : 95}% Confidence (Auto)
               </span>
@@ -1444,14 +1444,14 @@ const DashboardPanel = ({ onPageChange }) => {
           }}>
             <div style={{
               padding: `${theme.spacing.md}px`,
-              background: 'rgba(59, 130, 246, 0.05)',
+              background: 'rgba(201, 165, 32, 0.05)',
               borderRadius: `${theme.radius.md}px`,
-              border: '1px solid rgba(59, 130, 246, 0.1)'
+              border: '1px solid rgba(201, 165, 32, 0.1)'
             }}>
               <div style={{ fontSize: '10px', color: "var(--t-text-sub)", textTransform: 'uppercase', marginBottom: '4px' }}>
                 BCD (Basic Customs)
               </div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#3B82F6' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#C9A520' }}>
                 ₹2.4L
               </div>
             </div>
@@ -1490,7 +1490,7 @@ const DashboardPanel = ({ onPageChange }) => {
               <div style={{ fontSize: '10px', color: "var(--t-text-sub)", textTransform: 'uppercase', marginBottom: '4px' }}>
                 ADD (Anti-Dumping)
               </div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#06B6D4' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#6BBCD4' }}>
                 ₹1.2L
               </div>
             </div>
