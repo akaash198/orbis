@@ -5,9 +5,17 @@ from Orbisporte.core import engine, init_db
 
 def run_migrations():
     """Run all SQL migrations in the migrations folder"""
-    # 1. Initialize core tables from SQLAlchemy models
+    # 1. Import all models so SQLAlchemy knows which tables to create
+    from Orbisporte.domain.models import (
+        Company, User, ProcessedDocument, RefreshToken,
+        M02ExtractionResult, DocumentRegistry, IntakeEventLog, M03ClassificationResult
+    )
+    from Orbisporte.core import engine, Base
+    
     print("[1/2] Initializing core database tables...")
-    init_db()
+    Base.metadata.create_all(bind=engine)
+    print("[1/2] Core tables created successfully!")
+
     
     # 2. Run raw SQL migrations for custom types, data, and complex schemas
     print("[2/2] Checking for SQL migrations...")
