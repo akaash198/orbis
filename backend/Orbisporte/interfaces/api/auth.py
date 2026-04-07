@@ -101,9 +101,17 @@ def signup_user(db: Session, **user_data):
     if existing_email:
         return {"error": "Email already exists"}
 
+    # Handle company creation if company_name is provided
+    company_name = user_data.pop('company_name', None)
+    company_id = None
+    if company_name:
+        from Orbisporte.infrastructure.db import CompanyRepository
+        company = CompanyRepository.create_company(db, name=company_name)
+        company_id = company.id
+
     # Create user
     password = user_data.pop('password')
-    user = UserRepository.create_user(db, password=password, **user_data)
+    user = UserRepository.create_user(db, password=password, company_id=company_id, **user_data)
 
     # Create tokens
     access_token = create_access_token(data={"sub": str(user.id)})

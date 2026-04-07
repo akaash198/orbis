@@ -14,6 +14,7 @@ class SignupRequest(BaseModel):
     user_name: str
     email_id: EmailStr
     password: str
+    company_name: Optional[str] = None
     mobile_number: Optional[str] = None
     role: str = "importer"
     location: Optional[str] = None
