@@ -44,10 +44,10 @@ function LoginScreen({ onLogin, onSwitchToSignup }) {
     <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center mx-auto mb-4 shadow-glow-lg">
-            <span className="text-3xl">🌐</span>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <img src="/images/logo.png" alt="Orbisporté" className="h-12 w-auto object-contain" />
+            <span className="text-2xl font-black tracking-wider uppercase text-text-primary">ORBISPORTÉ</span>
           </div>
-          <h1 className="text-3xl font-bold gradient-text">ORBISPORTÉ</h1>
           <p className="text-text-secondary mt-2">AI-Powered Customs Platform</p>
         </div>
 
@@ -133,10 +133,10 @@ function SignupScreen({ onSignup, onBack }) {
     <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center mx-auto mb-4 shadow-glow-lg">
-            <span className="text-3xl">🌐</span>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <img src="/images/logo.png" alt="Orbisporté" className="h-12 w-auto object-contain" />
+            <span className="text-2xl font-black tracking-wider uppercase text-text-primary">ORBISPORTÉ</span>
           </div>
-          <h1 className="text-3xl font-bold gradient-text">ORBISPORTÉ</h1>
           <p className="text-text-secondary mt-2">Create your account</p>
         </div>
 

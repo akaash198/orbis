@@ -26,13 +26,14 @@ The frontend determines the backend URL based on environment variables.
 1. Create a `.env` file at the root of the project.
 2. Define the exact API URL:
    ```env
-   REACT_APP_API_URL=http://localhost:8000
+   REACT_APP_API_BASE_URL=http://localhost:8000
    ```
-   *(Note: If left undefined, the fallback is set to `https://orbisporte-backend.spectrai.sg` in `api.js`)*
+   *(If omitted, the app now falls back to `http://localhost:8000`.)*
 
 ### 2. Networking & Fallback Hosts
 The `api.js` service is built with high availability in mind. It includes a custom **fallback host handler** (`postWithFallback()`). If a request fails due to `ERR_NETWORK`, the application will automatically retry the request against:
-- The configured `REACT_APP_API_URL`
+- The configured `REACT_APP_API_BASE_URL`
+- `http://localhost:8000`
 - `http://127.0.0.1:8000` (if running locally)
 - The current window origin (useful for reverse proxies)
 
@@ -74,7 +75,7 @@ npm install
 
 ### 3. Start the Development Server
 ```bash
-# Ensure your .env has REACT_APP_API_URL setup
+# Ensure your .env has REACT_APP_API_BASE_URL setup
 npm start
 ```
 The application will be available at `http://localhost:3000`.

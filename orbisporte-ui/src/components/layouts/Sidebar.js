@@ -395,31 +395,24 @@ const Sidebar = ({ active, onSelect, collapsed, setCollapsed }) => {
       <SidebarHeader $collapsed={collapsed}>
         {!collapsed && (
           <>
-            <FloatingGlobe>🌐</FloatingGlobe>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                fontWeight: 900,
-                letterSpacing: '0.08em',
-                fontSize: '26px',
-                textShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
-                lineHeight: '1.3',
-                background: 'linear-gradient(135deg, #C9A520, #6BBCD4)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 10px rgba(201, 165, 32, 0.5))',
-                marginBottom: '4px'
-              }}>
-                ORBISPORTÉ
-              </div>
-            </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            width: '100%',
+            marginBottom: '18px'
+          }}>
+            <img 
+              src="/images/logo.png" 
+              alt="Orbisporté" 
+              style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
+            />
+            <span style={{ fontSize: '20px', fontWeight: '900', letterSpacing: '0.05em', color: theme.colors.text.sidebarPrimary }}>
+              ORBISPORTÉ
+            </span>
+          </div>
+
           </>
         )}
       </SidebarHeader>

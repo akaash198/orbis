@@ -1,0 +1,100 @@
+name: CI/CD Pipeline - Orbisporte Production
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  WEB_IMAGE: ghcr.io/${{ github.repository }}/orbisporte-frontend
+  API_IMAGE: ghcr.io/${{ github.repository }}/orbisporte-backend
+
+jobs:
+  # ── Step 1: Build & Push Frontend Image ──────────────────────────────────
+  build-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./orbisporte-ui
+          push: true
+          tags: ${{ env.WEB_IMAGE }}:latest,${{ env.WEB_IMAGE }}:${{ github.sha }}
+          build-args: |
+            REACT_APP_API_URL=${{ secrets.PROD_API_URL }}
+            REACT_APP_API_BASE_URL=${{ secrets.PROD_API_BASE_URL }}
+
+  # ── Step 2: Build & Push Backend Image ───────────────────────────────────
+  build-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.API_IMAGE }}:latest,${{ env.API_IMAGE }}:${{ github.sha }}
+
+  # ── Step 3: Deploy to Hetzner via SSH ────────────────────────────────────
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          passphrase: ${{ secrets.HETZNER_SSH_PASSPHRASE }} # If key has passphrase
+          script: |
+            # 1. Go to project directory (change this to your actual app path on Hetzner)
+            cd /opt/orbisporte
+
+            # 2. Update code from repo (for docker-compose.prod.yml changes)
+            git pull origin main
+
+            # 3. Log in to GHCR to pull private images
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 4. Pull latest images
+            docker compose -f docker-compose.prod.yml pull
+
+            # 5. Up (recreate containers with new images)
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # 6. Optional: Clean up old images
+            docker image prune -f

@@ -599,7 +599,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-text-primary">{doc.name}</p>
-                        <p className="mt-1 text-xs text-text-tertiary">Orbisporte review queue</p>
+                        <p className="mt-1 text-xs text-text-tertiary">Orbisporté review queue</p>
                       </div>
                       <Badge variant={doc.statusTone as any}>{doc.status}</Badge>
                     </div>
@@ -641,7 +641,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                             </div>
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium text-text-primary">{doc.name}</p>
-                              <p className="text-xs text-text-tertiary">Orbisporte review queue</p>
+                              <p className="text-xs text-text-tertiary">Orbisporté review queue</p>
                             </div>
                           </div>
                         </td>

@@ -52,6 +52,58 @@ Orbisporte/
 
 ## Quick Start
 
+### Run Without Docker
+
+You can run the platform directly on your machine with local PostgreSQL.
+
+1. Start PostgreSQL locally and create the database:
+```sql
+CREATE DATABASE orbisporte_db;
+```
+
+2. Configure the backend in `backend/.env`.
+The important values are:
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_NAME=orbisporte_db
+DATABASE_URL=postgresql://postgres:your_postgres_password@localhost:5432/orbisporte_db
+```
+
+3. Install backend dependencies and initialize the schema:
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python init_db.py
+```
+If you need the heavier document-intelligence or fraud modules later, install `backend/requirements-optional.txt` after the core set.
+
+4. Start the backend:
+```powershell
+uvicorn Orbisporte.interfaces.api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+5. In a second terminal, start the frontend:
+```powershell
+cd orbisporte-ui
+npm install
+$env:REACT_APP_API_BASE_URL="http://localhost:8000"
+npm start
+```
+
+6. Open the app:
+```text
+http://localhost:3000
+```
+
+Notes:
+- Redis, Kafka, and Celery are optional for basic local development.
+- The backend still requires PostgreSQL because the schema uses PostgreSQL-specific types.
+
 ### Frontend Setup
 
 1. **Navigate to UI directory:**

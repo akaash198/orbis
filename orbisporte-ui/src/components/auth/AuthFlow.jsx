@@ -336,43 +336,51 @@ function AuthShell({ title, subtitle, children }) {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(107,188,212,0.06),transparent_36%)]" />
 
           <div className="relative flex flex-1 flex-col justify-center gap-10 p-10 xl:p-12">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: C.gold }}>
-                <Globe className="h-6 w-6" style={{ color: C.textInverse }} />
-              </div>
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.20em]" style={{ color: C.textTertiary }}>
-                  Enterprise Platform
-                </p>
-                <p className="text-[20px] font-bold" style={{ color: C.textPrimary }}>
-                  ORBISPORT<span style={{ color: C.gold }}>É</span>
-                </p>
-              </div>
-            </div>
+            {/* Branding section */}
+            <div className="space-y-5">
 
-            {/* Value proposition */}
-            <div className="max-w-sm space-y-6">
-              <div
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px]"
-                style={{ background: C.goldMuted, border: `1px solid ${C.goldBorder}`, color: C.goldLight }}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>AI-Powered Customs Operations</span>
+              {/* Brand name + badge — full width */}
+              <div className="space-y-2">
+                <span className="text-[56px] font-black tracking-[0.05em] uppercase leading-none block" style={{ color: C.textPrimary }}>
+                  ORBISPORTÉ
+                </span>
+                <div
+                  className="inline-flex items-center gap-3 rounded-full px-5 py-2 text-[12px] font-bold tracking-widest uppercase"
+                  style={{ background: C.goldMuted, border: `1px solid ${C.goldBorder}`, color: C.goldLight }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>AI-Powered Customs Operations</span>
+                </div>
               </div>
 
-              <h1
-                className="text-[38px] font-bold leading-[1.1] tracking-tight"
-                style={{ color: C.textPrimary }}
-              >
-                Secure access to the{' '}
-                <span style={{ color: C.gold }}>customs</span>{' '}
-                control tower.
-              </h1>
+              {/* Headline + logo — 2-column grid, logo right of headline only */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: '32px' }}>
+                <div className="space-y-3">
+                  <h1
+                    className="text-[46px] font-bold leading-[1.1] tracking-tight"
+                    style={{ color: C.textPrimary }}
+                  >
+                    Secure access to the{' '}
+                    <span style={{ color: C.gold }}>customs</span>{' '}
+                    control tower.
+                  </h1>
+                  <p className="text-[17px] leading-relaxed font-medium" style={{ color: C.textSecondary }}>
+                    A focused onboarding experience for trade teams, compliance operators, and platform administrators.
+                  </p>
+                </div>
 
-              <p className="text-[15px] leading-relaxed" style={{ color: C.textSecondary }}>
-                A focused onboarding experience for trade teams, compliance operators, and platform administrators.
-              </p>
+                <img
+                  src="/images/logo.png"
+                  alt="Orbisporté"
+                  style={{
+                    height: '180px',
+                    width: 'auto',
+                    objectFit: 'contain',
+                    filter: `drop-shadow(0 0 36px ${C.goldGlow})`,
+                  }}
+                />
+              </div>
+
             </div>
 
             {/* Feature checklist */}
@@ -403,19 +411,16 @@ function AuthShell({ title, subtitle, children }) {
         {/* ── Right: Form ── */}
         <main className="flex min-h-screen items-center justify-center p-4">
           <div className="w-full max-w-[560px]">
-            {/* Mobile logo */}
-            <div className="mb-8 flex items-center gap-3 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: C.gold }}>
-                <Globe className="h-5 w-5" style={{ color: C.textInverse }} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.20em]" style={{ color: C.textTertiary }}>
-                  Orbisporté
-                </p>
-                <p className="text-[14px] font-semibold" style={{ color: C.textPrimary }}>
-                  Trade operations platform
-                </p>
-              </div>
+            {/* Right panel logo lockup */}
+            <div className="mb-8 flex items-center gap-0">
+              <img 
+                src="/images/logo.png" 
+                alt="Orbisporté" 
+                className="h-10 w-auto object-contain"
+              />
+              <span className="text-[22px] font-black uppercase" style={{ color: C.textPrimary, letterSpacing: '0.08em', marginLeft: '-10px' }}>
+                ORBISPORTÉ
+              </span>
             </div>
 
             {/* Card */}
@@ -617,7 +622,7 @@ function SignupPage({ onSignup, navigate, toast, prefilledEmail }) {
     e.preventDefault();
     if (!form.acceptTerms) { setError('You must accept the Terms to continue'); return; }
     if (!isValidEmail(form.email)) { setError('Please enter a valid email address'); return; }
-    if (form.password.length < 8 || pwMeta.score < 4) { setError("Password doesn't meet all requirements"); return; }
+    if (form.password.length < 8 || pwMeta.score < 3) { setError("Password doesn't meet all requirements"); return; }
     if (form.password !== form.confirmPassword) { setError("Passwords don't match"); return; }
 
     const { firstName, lastName } = splitName(form.fullName);
@@ -637,7 +642,7 @@ function SignupPage({ onSignup, navigate, toast, prefilledEmail }) {
       });
       localStorage.setItem(AUTH_KEY, form.email.trim().toLowerCase());
       toast({ title: 'Account created', description: 'Your workspace is ready.', variant: 'success' });
-      navigate('email-verified');
+      navigate('verify-email', { email: form.email.trim().toLowerCase() });
     } catch (err) {
       setError(normalizeError(err, 'Failed to create account. Please try again.'));
     } finally {
@@ -884,7 +889,7 @@ function ResetPasswordPage({ navigate, toast, token }) {
     e.preventDefault();
     if (expired)          { toast({ title: 'Link expired',      description: 'Request a new reset link.',         variant: 'error' }); return; }
     if (!token)           { toast({ title: 'Missing token',     description: 'The reset link is invalid.',        variant: 'error' }); return; }
-    if (pwMeta.score < 4) { toast({ title: 'Weak password',     description: 'Meet all password requirements.',   variant: 'warning' }); return; }
+    if (pwMeta.score < 3) { toast({ title: 'Weak password',     description: 'Meet all password requirements.',   variant: 'warning' }); return; }
     if (password !== confirmPassword) { toast({ title: 'Mismatch', description: 'Passwords do not match.',        variant: 'error' }); return; }
 
     setLoading(true);
@@ -971,13 +976,13 @@ function EmailVerifiedPage({ navigate }) {
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    if (countdown <= 0) { navigate('/'); return; }
+    if (countdown <= 0) { navigate('login'); return; }
     const t = window.setInterval(() => setCountdown((n) => n - 1), 1000);
     return () => window.clearInterval(t);
   }, [countdown, navigate]);
 
   return (
-    <AuthShell title="Email verified!" subtitle="Your account is confirmed. Redirecting to your dashboard...">
+    <AuthShell title="Email verified!" subtitle="Your account is confirmed. Please sign in to access your workspace.">
       <div className="space-y-6 text-center">
         <div
           className="mx-auto flex h-20 w-20 items-center justify-center rounded-full"
@@ -985,9 +990,9 @@ function EmailVerifiedPage({ navigate }) {
         >
           <CheckCircle2 className="h-10 w-10" style={{ color: C.success }} />
         </div>
-        <AlertBox variant="success">Your email is confirmed. You can now start using Orbisporté.</AlertBox>
-        <Btn variant="primary" fullWidth size="lg" onClick={() => navigate('/')}>
-          {countdown > 0 ? `Redirecting in ${countdown}…` : 'Go to Dashboard'}
+        <AlertBox variant="success">Your email is confirmed. You can now log in to Orbisporté.</AlertBox>
+        <Btn variant="primary" fullWidth size="lg" onClick={() => navigate('login')}>
+          {countdown > 0 ? `To Login in ${countdown}…` : 'Go to Login'}
         </Btn>
       </div>
     </AuthShell>

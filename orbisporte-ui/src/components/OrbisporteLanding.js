@@ -1,5 +1,5 @@
 /**
- * OrbisPorté Landing Page
+ * Orbisporté Landing Page
  * Ultra Interactive & Modern Version
  * VERSION 3.0 - With Animated Globe & Enhanced UI
  */
@@ -240,9 +240,7 @@ const OrbisporteLanding = ({ onLogin, onSignup }) => {
       <LandingHeader>
         <Logo>
           <AnimatedGlobe $mouseX={mousePosition.x} $mouseY={mousePosition.y}>
-            <GlobeSphere>
-              <GlobeIcon>🌐</GlobeIcon>
-            </GlobeSphere>
+            <LogoImage src="/images/logo.png" alt="Orbisporté Logo" />
           </AnimatedGlobe>
           <LogoTextWrapper>
             <LogoText>ORBISPORTÉ</LogoText>
@@ -429,7 +427,7 @@ const OrbisporteLanding = ({ onLogin, onSignup }) => {
 
       <Footer>
         <FooterContent>
-          <FooterText>© 2025 OrbisPorté. All Rights Reserved.</FooterText>
+          <FooterText>© 2025 Orbisporté. All Rights Reserved.</FooterText>
           <FooterDivider />
           <FooterText>Powered by AI. A product of SPECTRA AI PTE. LTD., Singapore.</FooterText>
         </FooterContent>
@@ -586,6 +584,12 @@ const AnimatedGlobe = styled.div`
     animation: ${glowPulse} 3s ease-in-out infinite;
     z-index: -1;
   }
+`;
+
+const LogoImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 `;
 
 const GlobeSphere = styled.div`

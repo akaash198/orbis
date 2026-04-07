@@ -148,13 +148,16 @@ export function Sidebar({ activeItem, onNavigate, isOpen, onClose, user, onLogou
         {/* Logo */}
         <div className="flex h-[60px] items-center justify-between border-b border-[#1E2638] px-4 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A520]">
-              <Globe className="h-4 w-4 text-[#0A0D14]" aria-hidden="true" />
-            </div>
-            <span className="text-[15px] font-700 text-[#E2E8F5] tracking-tight font-bold">
-              ORBISPORT<span className="text-[#C9A520]">É</span>
+            <img 
+              src="/images/logo.png" 
+              alt="Orbisporté" 
+              className="h-8 w-auto object-contain"
+            />
+            <span className="text-[17px] font-black tracking-widest uppercase text-[#E2E8F5]">
+              ORBISPORTÉ
             </span>
           </div>
+
           <button
             type="button"
             onClick={onClose}

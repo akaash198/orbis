@@ -210,14 +210,17 @@ export function Sidebar({ activeItem, onNavigate, isOpen, onClose }: SidebarProp
       >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/40 to-transparent" aria-hidden="true" />
         <div className="flex min-h-16 items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-brand">
-                <Globe className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-lg font-semibold text-text-primary">ORBISPORT&Eacute;</div>
-              </div>
+            <div className="flex items-center gap-2.5">
+              <img 
+                src="/images/logo.png" 
+                alt="Orbisporté" 
+                className="h-8 w-auto object-contain"
+              />
+              <span className="text-lg font-black tracking-wider uppercase text-slate-900">
+                ORBISPORTÉ
+              </span>
             </div>
+
           <button
             type="button"
             onClick={onClose}

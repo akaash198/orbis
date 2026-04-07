@@ -6,8 +6,11 @@
 
 import axios from 'axios';
 
-// Prefer explicit env, otherwise default to localhost; we'll add runtime fallbacks below
-const API_URL = process.env.REACT_APP_API_URL || 'https://orbisporte-backend.spectrai.sg';
+// Prefer the documented local env vars, then fall back to localhost.
+const API_URL =
+  process.env.REACT_APP_API_BASE_URL ||
+  process.env.REACT_APP_API_URL ||
+  'http://localhost:8000';
 export { API_URL, apiClient };
 console.log('API URL:', API_URL);
 

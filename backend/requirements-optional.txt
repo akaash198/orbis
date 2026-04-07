@@ -1,0 +1,49 @@
+# Optional feature dependencies.
+# Install only when you need the corresponding modules.
+
+alembic==1.13.1
+python-jose[cryptography]==3.3.0
+pydantic-settings==2.1.0
+python-magic==0.4.27
+
+# Document processing extras
+PyPDF2
+pdf2image
+opencv-python>=4.8.0
+pyzbar>=0.1.9
+
+# AI / retrieval / embeddings
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-community>=0.0.10
+langchain-core>=0.2.0
+langgraph>=0.2.0
+tiktoken>=0.5.0
+chromadb>=0.4.22
+sentence-transformers>=2.7.0
+faiss-cpu>=1.8.0
+langdetect>=1.0.9
+pgvector>=0.3.0
+transformers>=4.40.0
+torch>=2.2.0
+litellm>=1.40.0
+
+# Operational extras
+boto3>=1.34.0
+kafka-python>=2.0.2
+httpx>=0.25.0
+paramiko>=3.4.0
+reportlab>=4.0.0
+catboost>=1.2.0
+lightgbm>=4.3.0
+scikit-learn>=1.4.0
+numpy>=1.24.0
+pyod>=1.1.0
+networkx>=3.0
+python-louvain>=0.16
+prefixspan>=0.5.2
+scipy>=1.11.0
+tabpfn>=7.0.0
+
+# Misc helpers used by some optional flows
+typing-extensions>=4.9.0

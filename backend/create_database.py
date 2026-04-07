@@ -3,17 +3,23 @@ Create orbisporte_db database in PostgreSQL
 This script creates the database if it doesn't exist
 """
 
+import os
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import sys
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+BACKEND_DIR = Path(__file__).resolve().parent
+load_dotenv(BACKEND_DIR / ".env", override=True)
 
 # Database connection parameters
-# Using postgres superuser to create database (not nexora)
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_USER = "postgres"  # Use postgres superuser to create database
-DB_PASSWORD = "admin"
-DB_NAME = "orbisporte_db"
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "orbisporte_db")
 
 print("🚀 Creating Orbisporte database...")
 print()
@@ -67,8 +73,7 @@ except psycopg2.OperationalError as e:
     print()
     print("💡 Possible issues:")
     print("   1. PostgreSQL is not running")
-    print("   2. User 'nexora' doesn't exist")
-    print("   3. Password 'admin' is incorrect")
+    print("   2. DB_USER / DB_PASSWORD in backend/.env are incorrect")
     print()
     print("🔧 Try this in pgAdmin:")
     print("   1. Open pgAdmin")

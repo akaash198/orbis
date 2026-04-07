@@ -1,5 +1,5 @@
-/**
- * Global Styles — OrbisPorté Dark Aurora Theme
+﻿/**
+ * Global Styles â€” OrbisportÃ© Dark Aurora Theme
  * Deep space aesthetic with electric blue aurora accents
  * Supports dark / light mode via [data-theme] on <html>
  */
@@ -9,7 +9,7 @@ import theme from './theme';
 
 const GlobalStyles = createGlobalStyle`
 
-  /* ─── Theme CSS custom properties ─────────────────────────────────────────── */
+  /* â”€â”€â”€ Theme CSS custom properties â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   :root,
   [data-theme="dark"] {
     --t-bg:              #0A0D14;
@@ -110,7 +110,7 @@ const GlobalStyles = createGlobalStyle`
     --t-divider:         linear-gradient(90deg, rgba(201,165,32,0.35) 0%, rgba(15,23,42,0.08) 50%, transparent 100%);
   }
 
-  /* ─── Reset ────────────────────────────────────────────────────────────────── */
+  /* â”€â”€â”€ Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   * {
     margin: 0;
     padding: 0;
@@ -282,7 +282,7 @@ const GlobalStyles = createGlobalStyle`
   .animate-scale-in      { animation: scaleIn 0.3s ease-out; }
   .animate-pulse         { animation: pulse 2s infinite; }
 
-  /* Glassmorphism card — theme-aware */
+  /* Glassmorphism card â€” theme-aware */
   .card-brochure {
     background: var(--t-card);
     border-radius: ${theme.radius.lg}px;

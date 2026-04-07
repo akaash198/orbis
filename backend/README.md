@@ -40,6 +40,8 @@ createdb orbisporte_db
 cd backend
 pip install -r requirements.txt
 ```
+This installs the minimal runtime set needed to boot the API locally. Optional
+feature packages are listed in `requirements-optional.txt`.
 
 ### 3. Configure Environment
 

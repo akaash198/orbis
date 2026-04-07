@@ -684,15 +684,11 @@ const SignupForm = ({ onSwitchToLogin, onSignup, onBackToLanding }) => {
           </BackButton>
         )}
         <SignupHeader>
-          <GlobeContainer>
-            <Globe3D>
-              <GlobeInner>
-                <GlobeIcon>🌐</GlobeIcon>
-              </GlobeInner>
-            </Globe3D>
-          </GlobeContainer>
-          <h1>Create Account</h1>
-          <p>Join ORBISPORTÉ - The AI-Driven Global Trade Automation & Customs Platform</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '16px' }}>
+            <img src="/images/logo.png" alt="Orbisporté Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+            <h1 style={{ margin: 0, fontSize: '24px' }}>ORBISPORTÉ</h1>
+          </div>
+          <p>Join the AI-Driven Global Trade Automation & Customs Platform</p>
           <p style={{ fontSize: '11px', marginTop: '6px', opacity: 0.7, display: 'none' }}>
             A product of SPECTRA AI PTE. LTD., Singapore
           </p>
