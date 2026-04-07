@@ -14,11 +14,15 @@ def run_setup(host, port, user, password, local_zip):
         print(f"Connecting to {host}...")
         client.connect(host, port=port, username=user, password=password, timeout=10)
         
-        # 1. Install prerequisites
+        # 1. Clean up and install prerequisites
         cmds = [
             "export DEBIAN_FRONTEND=noninteractive",
             "apt-get update && apt-get install -y docker.io docker-compose-v2 git curl unzip",
             "systemctl start docker && systemctl enable docker",
+            "service nginx stop || true",
+            "pkill -9 nginx || true",
+            "cd /opt/orbisporte && docker compose -f docker-compose.prod.yml down || true",
+            "rm -rf /opt/orbisporte",
             "mkdir -p /opt/orbisporte"
         ]
         for cmd in cmds:
