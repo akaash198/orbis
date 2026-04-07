@@ -189,42 +189,48 @@ apiClient.interceptors.response.use(
 // ---- Fallback host handling for ERR_NETWORK (dev convenience) ----
 const fallbackHosts = (() => {
   const hosts = [];
-  // Current configured base
-  try { hosts.push(new URL(API_URL).origin); } catch (_) {}
-  // 127.0.0.1 variant — only add when the configured API URL is already localhost/127.0.0.1
-  // to avoid wasting time on an invalid host in production.
-  try {
-    const u = new URL(API_URL);
-    const hostname = u.hostname.toLowerCase();
-    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-    if (isLocal) {
-      hosts.push(`${u.protocol}//127.0.0.1:${u.port || (u.protocol === 'https:' ? '443' : '8000')}`);
-    }
-  } catch (_) {}
-  // Same-origin (useful if backend is reverse-proxied with frontend)
-  try {
-    const frontendOrigin = window.location.origin;
-    const primaryOrigin = new URL(API_URL).origin;
-    // Only add frontend origin as fallback if it's different from primary AND it's localhost (dev only)
-    if (frontendOrigin !== primaryOrigin && window.location.hostname === 'localhost') {
-      hosts.push(frontendOrigin);
-    }
-  } catch (_) {}
+  
+  // 1. If API_URL is absolute, add its origin
+  if (API_URL.startsWith('http')) {
+    try { hosts.push(new URL(API_URL).origin); } catch (_) {}
+  }
+  
+  // 2. 127.0.0.1 variant — only for local dev
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+     hosts.push('http://localhost:8000');
+     hosts.push('http://127.0.0.1:8000');
+  }
+
+  // 3. Always include current origin as a fallback for relative paths
+  if (typeof window !== 'undefined') {
+    hosts.push(window.location.origin);
+  }
+
   // Deduplicate
   return Array.from(new Set(hosts.filter(Boolean)));
 })();
 
 async function postWithFallback(path, data, config) {
-  let lastErr;
+  // If no fallback hosts, just use the apiClient directly
+  if (fallbackHosts.length === 0) {
+    return apiClient.post(path, data, config);
+  }
+
+  let lastErr = new Error('Connection failed');
   for (const origin of fallbackHosts) {
     try {
-      const client = origin === apiClient.defaults.baseURL
+      const isBaseOrigin = origin === apiClient.defaults.baseURL || 
+                           (API_URL.startsWith('/') && origin === window.location.origin);
+      
+      const client = isBaseOrigin
         ? apiClient
         : axios.create({ baseURL: origin, headers: { 'Content-Type': 'application/json' } });
+        
       if (authToken) client.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
       const res = await client.post(path, data, config);
+      
       // If different origin succeeded, update default for future calls
-      if (origin !== apiClient.defaults.baseURL) {
+      if (!isBaseOrigin && origin.startsWith('http')) {
         apiClient.defaults.baseURL = origin;
       }
       return res;
