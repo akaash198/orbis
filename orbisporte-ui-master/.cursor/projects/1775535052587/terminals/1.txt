@@ -1,0 +1,6 @@
+---
+pid: 25116
+cwd: |
+  F:\ORBIS\NEWUIORBIS\orbisporte-ui-master
+---
+PS F:\ORBIS\NEWUIORBIS\orbisporte-ui-master>

@@ -1,0 +1,131 @@
+# FastAPI and server
+fastapi>=0.104.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Authentication
+pyjwt==2.8.0
+bcrypt==4.1.2
+python-jose[cryptography]==3.3.0
+
+# Environment and configuration
+python-dotenv==1.0.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# File handling
+python-magic==0.4.27
+werkzeug>=2.3.0
+
+# AI/ML - OpenAI and LangChain
+openai>=1.12.0
+langextract>=1.2.0
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-community>=0.0.10
+tiktoken>=0.5.0
+
+# GLiNER — zero-shot NER for M02 entity validation
+gliner>=0.2.0
+
+# Google Gemini AI
+google-genai>=0.8.0
+
+# Document Processing
+PyMuPDF>=1.23.0
+PyPDF2
+pdf2image
+Pillow>=10.0.0
+opencv-python>=4.8.0
+paddleocr>=2.9.0
+paddlepaddle>=2.6.0
+pyzbar>=0.1.9
+
+# Data Analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# M02 Confidence Scoring
+lightgbm>=4.3.0
+scikit-learn>=1.4.0
+
+# Vector Database (for embeddings)
+chromadb>=0.4.22
+
+# HTTP
+requests>=2.31.0
+httpx>=0.25.0
+
+# ── Data Intake and Management ──────────────────────────────────────────────
+
+# Object Storage (RustFS / MinIO S3-compatible)
+boto3>=1.34.0
+
+# Message Queue
+kafka-python>=2.0.2
+
+# Semantic deduplication
+sentence-transformers>=2.7.0
+faiss-cpu>=1.8.0
+
+# Language detection
+langdetect>=1.0.9
+
+# SFTP ingestion
+paramiko>=3.4.0
+
+# Audio transcription (Whisper via OpenAI API — already listed above)
+# openai>=1.12.0  (already present)
+
+# ── M03 HSN Classification Engine ───────────────────────────────────────────
+
+# LangGraph — multi-step agent workflow orchestration
+langgraph>=0.2.0
+langchain-core>=0.2.0
+
+# pgvector — PostgreSQL vector type adapter for psycopg2
+pgvector>=0.3.0
+
+# Transformers — XLM-RoBERTa multilingual tokeniser/model
+transformers>=4.40.0
+torch>=2.2.0               # required by transformers for tensor ops (CPU-only is fine)
+
+# LiteLLM — unified multi-LLM API gateway (future: swap GPT/Gemini/DeepSeek)
+litellm>=1.40.0
+
+# typing-extensions — directly imported by langgraph_agent.py (TypedDict)
+typing-extensions>=4.9.0
+
+# ── M05 Bill of Entry Filing System ─────────────────────────────────────────
+
+# PDF generation for BoE download
+reportlab>=4.0.0
+
+# CatBoost pre-filing error predictor (primary)
+catboost>=1.2.0
+
+# ── M06 Trade Fraud Detection Engine ─────────────────────────────────────────
+
+# ECOD anomaly detection (under/over-invoicing, freight anomaly)
+pyod>=1.1.0
+
+# Graph construction + Louvain community detection (HCLNet fallback)
+networkx>=3.0
+python-louvain>=0.16
+
+# PrefixSpan sequential pattern mining (HSN manipulation)
+prefixspan>=0.5.2
+
+# Chi-square Benford's Law test
+scipy>=1.11.0
+
+# ── M07 Risk Score Engine ─────────────────────────────────────────────────────
+
+# CatBoost is used for supervised risk prediction in M07.
+# (already listed above under M05 dependencies)

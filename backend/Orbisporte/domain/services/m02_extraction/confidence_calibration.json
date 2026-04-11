@@ -1,0 +1,312 @@
+{
+  "unit": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "freight": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "currency": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "hsn_code": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "quantity": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "cif_value": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "incoterms": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "insurance": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "gst_number": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "iec_number": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "unit_price": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "100.0",
+        "reviewed": "100"
+      }
+    ]
+  },
+  "total_value": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "110.0",
+        "reviewed": "110"
+      }
+    ]
+  },
+  "vessel_name": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "invoice_date": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "document_type": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "exporter_name": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "importer_name": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "payment_terms": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "shipment_date": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "invoice_number": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "port_of_loading": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "container_number": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "exporter_address": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "importer_address": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "shipment_address": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "country_of_origin": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "goods_description": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  },
+  "port_of_discharge": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "bill_of_lading_number": {
+    "accuracy": 0.3333,
+    "correct": 0,
+    "total": 1,
+    "error_rate": 0.6667,
+    "examples": [
+      {
+        "extracted": "",
+        "reviewed": "none"
+      }
+    ]
+  },
+  "purchase_order_number": {
+    "accuracy": 0.6667,
+    "correct": 1,
+    "total": 1,
+    "error_rate": 0.3333,
+    "examples": []
+  }
+}
