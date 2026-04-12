@@ -35,7 +35,7 @@ PyMuPDF>=1.23.0
 PyPDF2
 pdf2image
 Pillow>=10.0.0
-opencv-python>=4.8.0
+opencv-python-headless>=4.8.0
 pyzbar>=0.1.9
 
 # Data Analysis
