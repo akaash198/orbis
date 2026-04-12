@@ -18,6 +18,10 @@ Write-Host "[3/3] Creating tables and test user..." -ForegroundColor Yellow
 python init_db.py
 Write-Host ""
 
+Write-Host "[4/4] Applying SQL migrations (duty engine / BoE / rates)..." -ForegroundColor Yellow
+.\apply_migrations.ps1
+Write-Host ""
+
 Write-Host "========================================" -ForegroundColor Green
 Write-Host "Setup Complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green

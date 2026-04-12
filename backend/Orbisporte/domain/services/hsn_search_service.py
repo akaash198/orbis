@@ -298,8 +298,52 @@ def classify_hsn_fast(product_description: str) -> Dict[str, Any]:
     try:
         candidates = _fetch_candidates(db_query)
     except Exception as exc:
+        # Common first-run scenario: HSN dataset table not loaded yet.
+        # Fall back to the lightweight, file-backed lookup so the UI workflow remains usable.
         logger.error("PostgreSQL fetch failed: %s", exc)
-        return {"error": f"Database error: {exc}"}
+        try:
+            from Orbisporte.domain.services.simple_hscode_lookup import get_simple_hscode_lookup
+
+            simple = get_simple_hscode_lookup().get_hs_code_details(original_query)
+            hs_code = str(simple.get("hs_code") or "").replace(".", "").strip()
+            found = bool(simple.get("found")) and bool(hs_code)
+            confidence = float(simple.get("confidence") or 0.0)
+
+            top3_predictions = []
+            if found:
+                top3_predictions = [
+                    {
+                        "hsn_code": hs_code,
+                        "description": simple.get("description") or "",
+                        "confidence": confidence,
+                        "reasoning": f"Matched by {simple.get('method', 'simple_lookup')}",
+                        "gri_rule": "GRI 1",
+                        "chapter": simple.get("chapter"),
+                        "chapter_name": None,
+                        "policy": None,
+                    }
+                ]
+
+            duration_ms = int((time.time() - t0) * 1000)
+            routing = "auto" if confidence >= 0.85 and found else "human_review"
+
+            return {
+                "product_description": original_query,
+                "selected_hsn": hs_code if found else None,
+                "selected_confidence": confidence if found else 0.0,
+                "overall_confidence": confidence if found else 0.0,
+                "top3_predictions": top3_predictions,
+                "candidates_retrieved": len(top3_predictions),
+                "routing": routing,
+                "method": "simple_lookup",
+                "pipeline_duration_ms": duration_ms,
+                "message": simple.get("note") or ("No candidates found." if not found else None),
+                "top_result": {"hsn_code": hs_code, "similarity": confidence} if found else None,
+                "hs_code": hs_code if found else None,
+            }
+        except Exception as fallback_exc:
+            logger.error("Simple HS lookup fallback failed: %s", fallback_exc)
+            return {"error": f"Database error: {exc}"}
 
     if not candidates:
         return {

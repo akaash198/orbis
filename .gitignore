@@ -43,6 +43,11 @@ Thumbs.db
 
 # Temp files
 .tmp/
+output/
+.playwright-cli/
+Microsoft/
+backend_backup/
+venv_new/
 
 # Windows AppData (if accidentally inside project)
 AppData/

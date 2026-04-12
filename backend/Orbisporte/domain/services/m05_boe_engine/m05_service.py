@@ -388,40 +388,48 @@ class M05BoEEngine:
         limit: int = 20,
         include_deleted: bool = False,
     ) -> List[Dict[str, Any]]:
-        if self._has_soft_delete_columns():
-            rows = self.db.execute(text("""
-                SELECT id, filing_ref, boe_number, icegate_boe_number, icegate_ack_number,
-                       icegate_status, filing_status, risk_score, risk_band,
-                       created_at, updated_at, port_of_import,
-                       COALESCE((boe_fields_json->>'importer_name'), '') AS importer_name,
-                       COALESCE((boe_fields_json->>'hsn_code'), '') AS hsn_code,
-                       COALESCE(NULLIF(boe_fields_json->>'custom_value_inr', '')::NUMERIC, 0) AS custom_value_inr,
-                       COALESCE(NULLIF(boe_fields_json->>'custom_duty', '')::NUMERIC, 0) AS custom_duty,
-                       COALESCE((boe_fields_json->>'date_of_filing'), '') AS date_of_filing,
-                       is_deleted, deleted_at
-                FROM m05_boe_filings
-                WHERE user_id = :uid
-                  AND (:include_deleted OR is_deleted = FALSE)
-                ORDER BY updated_at DESC, created_at DESC
-                LIMIT :lim
-            """), {"uid": user_id, "lim": limit, "include_deleted": include_deleted}).fetchall()
-        else:
-            rows = self.db.execute(text("""
-                SELECT id, filing_ref, boe_number, icegate_boe_number, icegate_ack_number,
-                       icegate_status, filing_status, risk_score, risk_band,
-                       created_at, updated_at, port_of_import,
-                       COALESCE((boe_fields_json->>'importer_name'), '') AS importer_name,
-                       COALESCE((boe_fields_json->>'hsn_code'), '') AS hsn_code,
-                       COALESCE(NULLIF(boe_fields_json->>'custom_value_inr', '')::NUMERIC, 0) AS custom_value_inr,
-                       COALESCE(NULLIF(boe_fields_json->>'custom_duty', '')::NUMERIC, 0) AS custom_duty,
-                       COALESCE((boe_fields_json->>'date_of_filing'), '') AS date_of_filing,
-                       FALSE AS is_deleted,
-                       NULL::timestamptz AS deleted_at
-                FROM m05_boe_filings
-                WHERE user_id = :uid
-                ORDER BY updated_at DESC, created_at DESC
-                LIMIT :lim
-            """), {"uid": user_id, "lim": limit}).fetchall()
+        try:
+            if self._has_soft_delete_columns():
+                rows = self.db.execute(text("""
+                    SELECT id, filing_ref, boe_number, icegate_boe_number, icegate_ack_number,
+                           icegate_status, filing_status, risk_score, risk_band,
+                           created_at, updated_at, port_of_import,
+                           COALESCE((boe_fields_json->>'importer_name'), '') AS importer_name,
+                           COALESCE((boe_fields_json->>'hsn_code'), '') AS hsn_code,
+                           COALESCE(NULLIF(boe_fields_json->>'custom_value_inr', '')::NUMERIC, 0) AS custom_value_inr,
+                           COALESCE(NULLIF(boe_fields_json->>'custom_duty', '')::NUMERIC, 0) AS custom_duty,
+                           COALESCE((boe_fields_json->>'date_of_filing'), '') AS date_of_filing,
+                           is_deleted, deleted_at
+                    FROM m05_boe_filings
+                    WHERE user_id = :uid
+                      AND (:include_deleted OR is_deleted = FALSE)
+                    ORDER BY updated_at DESC, created_at DESC
+                    LIMIT :lim
+                """), {"uid": user_id, "lim": limit, "include_deleted": include_deleted}).fetchall()
+            else:
+                rows = self.db.execute(text("""
+                    SELECT id, filing_ref, boe_number, icegate_boe_number, icegate_ack_number,
+                           icegate_status, filing_status, risk_score, risk_band,
+                           created_at, updated_at, port_of_import,
+                           COALESCE((boe_fields_json->>'importer_name'), '') AS importer_name,
+                           COALESCE((boe_fields_json->>'hsn_code'), '') AS hsn_code,
+                           COALESCE(NULLIF(boe_fields_json->>'custom_value_inr', '')::NUMERIC, 0) AS custom_value_inr,
+                           COALESCE(NULLIF(boe_fields_json->>'custom_duty', '')::NUMERIC, 0) AS custom_duty,
+                           COALESCE((boe_fields_json->>'date_of_filing'), '') AS date_of_filing,
+                           FALSE AS is_deleted,
+                           NULL::timestamptz AS deleted_at
+                    FROM m05_boe_filings
+                    WHERE user_id = :uid
+                    ORDER BY updated_at DESC, created_at DESC
+                    LIMIT :lim
+                """), {"uid": user_id, "lim": limit}).fetchall()
+        except Exception as exc:
+            logger.warning("[M05] get_filing_history failed (returning empty): %s", exc)
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
+            return []
 
         result = []
         for row in rows:

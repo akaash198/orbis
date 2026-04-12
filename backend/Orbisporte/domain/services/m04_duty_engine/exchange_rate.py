@@ -138,6 +138,12 @@ class ExchangeRateService:
                 return Decimal(str(row[0]))
         except Exception as exc:
             logger.warning("[M04][ExRate] DB cache read error: %s", exc)
+            # If the table is missing (or any SQL error occurs), the transaction can be left
+            # in an aborted state. Roll back so downstream computations can continue.
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
         return None
 
     def _store_rate(

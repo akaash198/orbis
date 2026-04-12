@@ -419,18 +419,28 @@ class M04DutyEngine:
             if len(code) < length:
                 continue
             variant = code[:length]
-            row = self.db.execute(
-                text("""
-                    SELECT rate_percent FROM duty_rates
-                    WHERE hsn_code = :hsn
-                      AND duty_type = :dtype
-                      AND effective_from <= CAST(:d AS DATE)
-                      AND (effective_to IS NULL OR effective_to >= CAST(:d AS DATE))
-                    ORDER BY legal_priority DESC, effective_from DESC
-                    LIMIT 1
-                """),
-                {"hsn": variant, "dtype": duty_type, "d": as_of_date.isoformat()},
-            ).fetchone()
+            try:
+                row = self.db.execute(
+                    text("""
+                        SELECT rate_percent FROM duty_rates
+                        WHERE hsn_code = :hsn
+                          AND duty_type = :dtype
+                          AND effective_from <= CAST(:d AS DATE)
+                          AND (effective_to IS NULL OR effective_to >= CAST(:d AS DATE))
+                        ORDER BY legal_priority DESC, effective_from DESC
+                        LIMIT 1
+                    """),
+                    {"hsn": variant, "dtype": duty_type, "d": as_of_date.isoformat()},
+                ).fetchone()
+            except Exception as exc:
+                # Missing/misconfigured DB tables should not crash the full duty workflow.
+                # Roll back to clear aborted transactions, then return the safe default.
+                logger.warning("[M04] Duty rate lookup failed for %s/%s: %s", variant, duty_type, exc)
+                try:
+                    self.db.rollback()
+                except Exception:
+                    pass
+                return default
             if row:
                 if length < len(code):
                     logger.info(

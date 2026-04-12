@@ -1,0 +1,16 @@
+venv/
+venv_new/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.git/
+.tmp/
+output/
+uploads/
+data/
+logs/
+*.log
+backend-uvicorn.*.log
+
