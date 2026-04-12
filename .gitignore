@@ -48,6 +48,7 @@ output/
 Microsoft/
 backend_backup/
 venv_new/
+orbisporte-ui.local/
 
 # Windows AppData (if accidentally inside project)
 AppData/
