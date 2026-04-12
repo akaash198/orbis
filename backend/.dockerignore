@@ -6,6 +6,14 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .git/
+.env
+.env.*
+*.env
+.secrets/
+.ssh/
+.pem
+.p12
+.pfx
 .tmp/
 output/
 uploads/
@@ -13,4 +21,3 @@ data/
 logs/
 *.log
 backend-uvicorn.*.log
-
