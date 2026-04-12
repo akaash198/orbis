@@ -92,14 +92,15 @@ def signup_user(db: Session, **user_data):
     Returns:
         dict with user info and tokens, or error dict
     """
-    # Check if username or email already exists
-    existing_user = UserRepository.get_by_username(db, user_data.get('user_name'))
-    if existing_user:
-        return {"error": "Username already exists"}
-
+    # Check if username or email already exists.
+    # The UI derives user_name from email, so return a single, clear message.
     existing_email = UserRepository.get_by_email(db, user_data.get('email_id'))
     if existing_email:
-        return {"error": "Email already exists"}
+        return {"error": "Account already exists. Please sign in."}
+
+    existing_user = UserRepository.get_by_username(db, user_data.get('user_name'))
+    if existing_user:
+        return {"error": "Account already exists. Please sign in."}
 
     # Create user
     password = user_data.pop('password')
