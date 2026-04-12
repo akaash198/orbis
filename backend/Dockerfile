@@ -8,6 +8,10 @@ FROM python:3.11-slim as builder
 
 WORKDIR /app
 
+# Increase pip resilience for slow package downloads
+ENV PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -16,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --user --retries 10 --timeout 120 -r requirements.txt
 
 # ── Stage 2: Production ──────────────────
 FROM python:3.11-slim
