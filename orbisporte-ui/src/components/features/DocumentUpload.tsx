@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Upload,
   FileText,
@@ -120,6 +120,7 @@ export function DocumentUpload({ onNavigate }: DocumentUploadProps) {
   const [selectedDocument, setSelectedDocument] = useState<DocItem | null>(null);
   const [mode, setMode] = useState<'repository' | 'upload' | 'workflow'>('repository');
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const filtered = useMemo(() => documents.filter((doc) => {
     const q = searchTerm.trim().toLowerCase();
@@ -327,7 +328,29 @@ export function DocumentUpload({ onNavigate }: DocumentUploadProps) {
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand/15 text-brand-accent"><Upload className="h-8 w-8" /></div>
                   <h3 className="text-lg font-semibold text-text-primary">Drop documents here</h3>
                   <p className="mt-2 text-body-sm text-text-secondary">PDF, JPG, PNG, and TIFF are supported.</p>
-                  <div className="mt-5"><input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.tiff" className="hidden" id="document-upload-input" onChange={(e) => e.target.files && addFiles(Array.from(e.target.files))} /><label htmlFor="document-upload-input"><Button variant="secondary" className="cursor-pointer">Browse Files</Button></label></div>
+                  <div className="mt-5">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png,.tiff"
+                      className="hidden"
+                      id="document-upload-input"
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          addFiles(Array.from(e.target.files));
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="secondary"
+                      className="cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Browse Files
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
