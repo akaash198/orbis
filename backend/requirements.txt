@@ -86,7 +86,7 @@ pgvector>=0.3.0
 # Transformers — XLM-RoBERTa multilingual tokeniser/model
 transformers>=4.40.0
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.2.2+cpu            # CPU-only to avoid CUDA wheel downloads
+torch==2.5.1+cpu            # CPU-only to avoid CUDA wheel downloads (tabpfn needs >=2.5)
 
 # typing-extensions — directly imported by langgraph_agent.py (TypedDict)
 typing-extensions>=4.9.0
