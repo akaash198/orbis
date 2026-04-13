@@ -15,8 +15,8 @@ python-jose[cryptography]==3.3.0
 
 # Environment and configuration
 python-dotenv==1.0.0
-pydantic==2.8.2
-pydantic-settings==2.5.2
+pydantic==2.10.6
+pydantic-settings==2.10.1
 email-validator==2.1.0
 
 # File handling
