@@ -87,9 +87,6 @@ pgvector>=0.3.0
 transformers>=4.40.0
 torch>=2.2.0               # required by transformers for tensor ops (CPU-only is fine)
 
-# LiteLLM — unified multi-LLM API gateway (future: swap GPT/Gemini/DeepSeek)
-litellm>=1.40.0
-
 # typing-extensions — directly imported by langgraph_agent.py (TypedDict)
 typing-extensions>=4.9.0
 
