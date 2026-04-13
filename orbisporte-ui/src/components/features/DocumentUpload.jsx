@@ -154,8 +154,9 @@ export function DocumentUpload({ onNavigate }) {
       type="file"
       multiple
       accept=".pdf,.jpg,.jpeg,.png,.tiff"
-      className="hidden"
+      className="sr-only"
       id="document-upload-input"
+      tabIndex={-1}
       onChange={(e) => {
         if (e.target.files) {
           addFiles(Array.from(e.target.files));
@@ -353,9 +354,11 @@ export function DocumentUpload({ onNavigate }) {
                   <p className="mt-2 text-body-sm text-text-secondary">PDF, JPG, PNG, and TIFF are supported.</p>
                   <div className="mt-5">
                     {uploadInput}
-                    <Button variant="secondary" className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                      Browse Files
-                    </Button>
+                    <label htmlFor="document-upload-input" className="inline-flex">
+                      <Button variant="secondary" className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        Browse Files
+                      </Button>
+                    </label>
                   </div>
                 </div>
               </CardContent>
