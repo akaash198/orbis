@@ -56,33 +56,25 @@ class TradeRemedyEngine:
         hsn_variants = self._hsn_variants(hsn_code)
         country = (country_of_origin or "").upper().strip() or None
 
-        try:
-            rows = self.db.execute(
-                text("""
-                    SELECT remedy_type, rate_type, rate_value, unit,
-                           notification_number, dgtr_case_number,
-                           effective_from, effective_to
-                    FROM m04_trade_remedy_notifications
-                    WHERE hsn_code = ANY(:hsns)
-                      AND is_active = TRUE
-                      AND effective_from <= CAST(:d AS DATE)
-                      AND (effective_to IS NULL OR effective_to >= CAST(:d AS DATE))
-                      AND (country_of_origin IS NULL OR country_of_origin = :country)
-                    ORDER BY effective_from DESC
-                """),
-                {
-                    "hsns": hsn_variants,
-                    "d": as_of_date.isoformat(),
-                    "country": country,
-                },
-            ).fetchall()
-        except Exception as exc:
-            logger.warning("[M04][TradeRemedy] DB lookup failed (returning none): %s", exc)
-            try:
-                self.db.rollback()
-            except Exception:
-                pass
-            return []
+        rows = self.db.execute(
+            text("""
+                SELECT remedy_type, rate_type, rate_value, unit,
+                       notification_number, dgtr_case_number,
+                       effective_from, effective_to
+                FROM m04_trade_remedy_notifications
+                WHERE hsn_code = ANY(:hsns)
+                  AND is_active = TRUE
+                  AND effective_from <= CAST(:d AS DATE)
+                  AND (effective_to IS NULL OR effective_to >= CAST(:d AS DATE))
+                  AND (country_of_origin IS NULL OR country_of_origin = :country)
+                ORDER BY effective_from DESC
+            """),
+            {
+                "hsns": hsn_variants,
+                "d": as_of_date.isoformat(),
+                "country": country,
+            },
+        ).fetchall()
 
         remedies = []
         seen_types: set[str] = set()

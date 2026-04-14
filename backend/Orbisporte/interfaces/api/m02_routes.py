@@ -211,7 +211,6 @@ async def process_document(
 @router.post("/extract/{document_id}", summary="Extract fields synchronously (returns result immediately)")
 def extract_document_sync(
     document_id: int,
-    fast_mode: bool = Query(True, description="Use fast mode for lower latency (recommended for UI)."),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -264,9 +263,15 @@ def extract_document_sync(
         from Orbisporte.domain.services.m02_extraction.document_type_detector import get_type_meta
         
         svc = M02ExtractionService()
-
-        # Keep synchronous extraction latency bounded for interactive UI flows.
-        output = svc.process(file_path, document_id=document_id, fast_mode=fast_mode)
+        
+        # Run full pipeline synchronously (use fast_mode=False for better results on multi-page docs)
+        # Set extended timeout for multi-page documents using GPT-4o-mini OCR
+        import os
+        os.environ["M02_PIPELINE_TARGET_SECONDS"] = "300"  # 5 minutes for large multi-page docs
+        os.environ["M02_GPT4O_MAX_PAGES"] = "25"  # Process up to 25 pages
+        os.environ["M02_GPT4O_TIMEOUT"] = "180"  # 3 minutes per page
+        
+        output = svc.process(file_path, document_id=document_id, fast_mode=False)
         
         # Log pipeline stages for debugging
         pipeline_stages = output.get("pipeline_stages", {})

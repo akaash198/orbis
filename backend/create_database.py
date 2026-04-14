@@ -12,15 +12,15 @@ import sys
 DB_HOST = "localhost"
 DB_PORT = "5432"
 DB_USER = "postgres"  # Use postgres superuser to create database
-DB_PASSWORD = "postgres"
+DB_PASSWORD = "admin"
 DB_NAME = "orbisporte_db"
 
-print("Creating Orbisporte database...")
+print("🚀 Creating Orbisporte database...")
 print()
 
 try:
     # Connect to PostgreSQL server (to default 'postgres' database)
-    print(f"Connecting to PostgreSQL server as user '{DB_USER}'...")
+    print(f"📡 Connecting to PostgreSQL server as user '{DB_USER}'...")
     conn = psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -34,7 +34,7 @@ try:
     cursor = conn.cursor()
 
     # Check if database exists
-    print(f"Checking if database '{DB_NAME}' exists...")
+    print(f"🔍 Checking if database '{DB_NAME}' exists...")
     cursor.execute(
         "SELECT 1 FROM pg_database WHERE datname = %s",
         (DB_NAME,)
@@ -42,28 +42,28 @@ try:
     exists = cursor.fetchone()
 
     if exists:
-        print(f"Database '{DB_NAME}' already exists!")
+        print(f"✅ Database '{DB_NAME}' already exists!")
     else:
         # Create database
-        print(f"Creating database '{DB_NAME}'...")
+        print(f"📝 Creating database '{DB_NAME}'...")
         cursor.execute(f'CREATE DATABASE {DB_NAME}')
-        print(f"Database '{DB_NAME}' created successfully!")
+        print(f"✅ Database '{DB_NAME}' created successfully!")
 
     # Grant permissions
-    print(f"Setting up permissions for user '{DB_USER}'...")
+    print(f"🔐 Setting up permissions for user '{DB_USER}'...")
     cursor.execute(f'GRANT ALL PRIVILEGES ON DATABASE {DB_NAME} TO {DB_USER}')
 
     cursor.close()
     conn.close()
 
     print()
-    print("Database setup complete!")
+    print("✨ Database setup complete!")
     print()
-    print("Next step: Run 'python init_db.py' to create tables")
+    print("📝 Next step: Run 'python init_db.py' to create tables")
     print()
 
 except psycopg2.OperationalError as e:
-    print(f"Connection Error: {e}")
+    print(f"❌ Connection Error: {e}")
     print()
     print("💡 Possible issues:")
     print("   1. PostgreSQL is not running")
@@ -79,5 +79,5 @@ except psycopg2.OperationalError as e:
     sys.exit(1)
 
 except Exception as e:
-    print(f"Error: {e}")
+    print(f"❌ Error: {e}")
     sys.exit(1)
